@@ -1,5 +1,7 @@
 package com.qianniuyun.recording.service;
 
+import com.qianniuyun.recording.entity.Recording;
+import com.qianniuyun.recording.repository.RecordingRepository;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
 import io.minio.GetObjectArgs;
