@@ -1,0 +1,115 @@
+server:
+  port: 8888
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      routes:
+        - id: auth-service
+          uri: lb://auth-service
+          predicates:
+            - Path=/api/auth/**
+          filters:
+            - StripPrefix=1
+
+        - id: customer-service
+          uri: lb://customer-service
+          predicates:
+            - Path=/api/customers/**
+          filters:
+            - StripPrefix=1
+            - name: AuthFilter
+
+        - id: agent-service
+          uri: lb://agent-service
+          predicates:
+            - Path=/api/agents/**
+          filters:
+            - StripPrefix=1
+            - name: AuthFilter
+
+        - id: call-service
+          uri: lb://call-service
+          predicates:
+            - Path=/api/calls/**
+          filters:
+            - StripPrefix=1
+            - name: AuthFilter
+
+        - id: ticket-service
+          uri: lb://ticket-service
+          predicates:
+            - Path=/api/tickets/**
+          filters:
+            - StripPrefix=1
+            - name: AuthFilter
+
+        - id: report-service
+          uri: lb://report-service
+          predicates:
+            - Path=/api/reports/**
+          filters:
+            - StripPrefix=1
+            - name: AuthFilter
+
+        - id: ivr-service
+          uri: lb://ivr-service
+          predicates:
+            - Path=/api/ivr/**
+          filters:
+            - StripPrefix=1
+            - name: AuthFilter
+
+        - id: quality-service
+          uri: lb://quality-service
+          predicates:
+            - Path=/api/quality/**
+          filters:
+            - StripPrefix=1
+            - name: AuthFilter
+
+        - id: notification-service
+          uri: lb://notification-service
+          predicates:
+            - Path=/api/notifications/**
+          filters:
+            - StripPrefix=1
+            - name: AuthFilter
+
+      # 全局限流
+      default-filters:
+        - name: RequestRateLimiter
+          args:
+            redis-rate-limiter.replenishRate: 100
+            redis-rate-limiter.burstCapacity: 200
+            key-resolver: "#{@ipKeyResolver}"
+
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOriginPatterns: "*"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+            allowedHeaders: "*"
+            allowCredentials: true
+
+# JWT 配置
+jwt:
+  secret: ${JWT_SECRET:qianniuyun-callcenter-jwt-secret-2025}
+  expiration: 86400  # 24小时（秒）
+
+# 熔断配置
+resilience4j:
+  circuitbreaker:
+    instances:
+      default:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 3

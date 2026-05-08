@@ -1,0 +1,30 @@
+{
+  "name": "qianniu-agent-workspace",
+  "version": "1.0.0",
+  "description": "千牛云呼叫中心 - 座席工作台",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc && vite build",
+    "preview": "vite preview",
+    "lint": "eslint src --ext .vue,.ts,.tsx"
+  },
+  "dependencies": {
+    "vue": "^3.4.0",
+    "vue-router": "^4.2.5",
+    "pinia": "^2.1.7",
+    "element-plus": "^2.4.4",
+    "@element-plus/icons-vue": "^2.3.1",
+    "axios": "^1.6.2",
+    "socket.io-client": "^4.6.1",
+    "echarts": "^5.4.3",
+    "dayjs": "^1.11.10",
+    "sip.js": "^0.21.2"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^4.5.2",
+    "typescript": "^5.3.2",
+    "vite": "^5.0.8",
+    "vue-tsc": "^1.8.25",
+    "@types/node": "^20.10.6"
+  }
+}

@@ -1,0 +1,141 @@
+// 千牛云呼叫中心系统 - CI/CD 流水线
+// 作者：深圳市千牛云科技有限公司
+
+pipeline {
+    agent any
+
+    environment {
+        REGISTRY = 'registry.qianniuyun.com'
+        IMAGE_PREFIX = 'qianniuyun'
+        K8S_NAMESPACE = 'qianniu-callcenter'
+        SERVICES = 'auth-service customer-service agent-service call-service ivr-service recording-service ticket-service quality-service report-service notification-service'
+    }
+
+    stages {
+        stage('代码检出') {
+            steps {
+                checkout scm
+                echo "构建分支: ${env.BRANCH_NAME}, 提交: ${env.GIT_COMMIT[0..7]}"
+            }
+        }
+
+        stage('代码质量检查') {
+            parallel {
+                stage('后端代码检查') {
+                    steps {
+                        dir('backend') {
+                            sh 'mvn checkstyle:check spotbugs:check'
+                        }
+                    }
+                }
+                stage('前端代码检查') {
+                    steps {
+                        dir('frontend/agent-workspace') {
+                            sh 'npm ci && npm run lint'
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('单元测试') {
+            steps {
+                dir('backend') {
+                    sh 'mvn test -pl services/call-service,services/agent-service,services/ticket-service'
+                }
+            }
+            post {
+                always {
+                    junit 'backend/**/target/surefire-reports/*.xml'
+                }
+            }
+        }
+
+        stage('构建镜像') {
+            when {
+                anyOf {
+                    branch 'main'
+                    branch 'release/*'
+                }
+            }
+            steps {
+                script {
+                    def version = env.BRANCH_NAME == 'main' ? 'latest' : env.BRANCH_NAME.replace('release/', '')
+
+                    // 构建后端服务镜像
+                    dir('backend') {
+                        sh "mvn package -DskipTests"
+                        env.SERVICES.split(' ').each { service ->
+                            sh """
+                                docker build -t ${REGISTRY}/${IMAGE_PREFIX}/${service}:${version} \
+                                    -f services/${service}/Dockerfile \
+                                    services/${service}/
+                                docker push ${REGISTRY}/${IMAGE_PREFIX}/${service}:${version}
+                            """
+                        }
+                    }
+
+                    // 构建前端镜像
+                    ['agent-workspace', 'admin-portal'].each { app ->
+                        dir("frontend/${app}") {
+                            sh """
+                                npm ci && npm run build
+                                docker build -t ${REGISTRY}/${IMAGE_PREFIX}/${app}:${version} .
+                                docker push ${REGISTRY}/${IMAGE_PREFIX}/${app}:${version}
+                            """
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('部署到测试环境') {
+            when { branch 'main' }
+            steps {
+                sh """
+                    kubectl set image deployment/call-service \
+                        call-service=${REGISTRY}/${IMAGE_PREFIX}/call-service:latest \
+                        -n ${K8S_NAMESPACE}-test
+                    kubectl rollout status deployment/call-service -n ${K8S_NAMESPACE}-test
+                """
+            }
+        }
+
+        stage('集成测试') {
+            when { branch 'main' }
+            steps {
+                sh 'mvn verify -pl integration-tests -Denv=test'
+            }
+        }
+
+        stage('部署到生产环境') {
+            when { branch 'release/*' }
+            input {
+                message "确认部署到生产环境？"
+                ok "确认部署"
+            }
+            steps {
+                script {
+                    def version = env.BRANCH_NAME.replace('release/', '')
+                    env.SERVICES.split(' ').each { service ->
+                        sh """
+                            kubectl set image deployment/${service} \
+                                ${service}=${REGISTRY}/${IMAGE_PREFIX}/${service}:${version} \
+                                -n ${K8S_NAMESPACE}
+                            kubectl rollout status deployment/${service} -n ${K8S_NAMESPACE}
+                        """
+                    }
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo '✅ 构建成功'
+        }
+        failure {
+            echo '❌ 构建失败，请检查日志'
+        }
+    }
+}

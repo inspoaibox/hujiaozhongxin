@@ -1,0 +1,88 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    monitor: 'qianniu-callcenter'
+
+rule_files:
+  - "alert_rules.yml"
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - alertmanager:9093
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'call-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['call-service:8080']
+
+  - job_name: 'agent-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['agent-service:8081']
+
+  - job_name: 'customer-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['customer-service:8082']
+
+  - job_name: 'ticket-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['ticket-service:8083']
+
+  - job_name: 'ivr-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['ivr-service:8084']
+
+  - job_name: 'recording-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['recording-service:8085']
+
+  - job_name: 'report-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['report-service:8086']
+
+  - job_name: 'auth-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['auth-service:8087']
+
+  - job_name: 'api-gateway'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['api-gateway:8888']
+
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres-exporter:9187']
+
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis-exporter:9121']
+
+  - job_name: 'kafka'
+    static_configs:
+      - targets: ['kafka-exporter:9308']
+
+  - job_name: 'kubernetes-pods'
+    kubernetes_sd_configs:
+      - role: pod
+    relabel_configs:
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+        action: keep
+        regex: true
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+        action: replace
+        target_label: __metrics_path__
+        regex: (.+)

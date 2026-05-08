@@ -1,0 +1,36 @@
+# Git
+.git
+.gitignore
+
+# IDE
+.idea
+.vscode
+*.iml
+
+# 文档
+docs
+README.md
+
+# 测试报告
+**/target/surefire-reports
+**/target/failsafe-reports
+
+# 源码（镜像只需要 JAR）
+**/src
+
+# Node modules
+**/node_modules
+
+# 前端源码（镜像只需要 dist）
+frontend/**/src
+frontend/**/public
+frontend/**/*.ts
+frontend/**/*.vue
+frontend/**/package*.json
+frontend/**/vite.config.*
+frontend/**/tsconfig.*
+
+# 基础设施配置（不打包进镜像）
+infrastructure
+.kiro
+.github

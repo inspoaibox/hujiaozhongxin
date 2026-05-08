@@ -1,0 +1,361 @@
+---
+# 千牛云呼叫中心系统 - Prometheus 监控配置
+# ConfigMap - Prometheus 配置
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-config
+  namespace: qianniu-monitoring
+  labels:
+    app: prometheus
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 15s
+      evaluation_interval: 15s
+      external_labels:
+        cluster: 'qianniu-call-center'
+        environment: 'production'
+
+    # 告警规则文件
+    rule_files:
+      - /etc/prometheus/rules/*.yml
+
+    # 告警管理器配置
+    alerting:
+      alertmanagers:
+        - static_configs:
+            - targets:
+                - alertmanager:9093
+
+    # 抓取配置
+    scrape_configs:
+      # Prometheus 自身监控
+      - job_name: 'prometheus'
+        static_configs:
+          - targets: ['localhost:9090']
+
+      # Kubernetes API Server
+      - job_name: 'kubernetes-apiservers'
+        kubernetes_sd_configs:
+          - role: endpoints
+        scheme: https
+        tls_config:
+          ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_service_name, __meta_kubernetes_endpoint_port_name]
+            action: keep
+            regex: default;kubernetes;https
+
+      # Kubernetes Nodes
+      - job_name: 'kubernetes-nodes'
+        kubernetes_sd_configs:
+          - role: node
+        scheme: https
+        tls_config:
+          ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+        relabel_configs:
+          - action: labelmap
+            regex: __meta_kubernetes_node_label_(.+)
+
+      # Kubernetes Pods
+      - job_name: 'kubernetes-pods'
+        kubernetes_sd_configs:
+          - role: pod
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+            action: keep
+            regex: true
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+            action: replace
+            target_label: __metrics_path__
+            regex: (.+)
+          - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+            action: replace
+            regex: ([^:]+)(?::\d+)?;(\d+)
+            replacement: $1:$2
+            target_label: __address__
+          - action: labelmap
+            regex: __meta_kubernetes_pod_label_(.+)
+          - source_labels: [__meta_kubernetes_namespace]
+            action: replace
+            target_label: kubernetes_namespace
+          - source_labels: [__meta_kubernetes_pod_name]
+            action: replace
+            target_label: kubernetes_pod_name
+
+      # PostgreSQL 监控
+      - job_name: 'postgresql'
+        static_configs:
+          - targets: ['postgresql-exporter.qianniu-databases.svc.cluster.local:9187']
+        labels:
+          service: postgresql
+
+      # Redis 监控
+      - job_name: 'redis'
+        static_configs:
+          - targets: ['redis-exporter.qianniu-databases.svc.cluster.local:9121']
+        labels:
+          service: redis
+
+      # Kafka 监控
+      - job_name: 'kafka'
+        static_configs:
+          - targets: ['kafka-exporter.qianniu-databases.svc.cluster.local:9308']
+        labels:
+          service: kafka
+
+      # Elasticsearch 监控
+      - job_name: 'elasticsearch'
+        static_configs:
+          - targets: ['elasticsearch-exporter.qianniu-databases.svc.cluster.local:9114']
+        labels:
+          service: elasticsearch
+
+      # MinIO 监控
+      - job_name: 'minio'
+        static_configs:
+          - targets: ['minio-api.qianniu-databases.svc.cluster.local:9000']
+        metrics_path: /minio/v2/metrics/cluster
+        labels:
+          service: minio
+
+      # 业务服务监控（Spring Boot Actuator）
+      - job_name: 'qianniu-services'
+        kubernetes_sd_configs:
+          - role: pod
+            namespaces:
+              names:
+                - qianniu-services
+                - qianniu-gateway
+                - qianniu-engines
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+            action: keep
+            regex: true
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+            action: replace
+            target_label: __metrics_path__
+            regex: (.+)
+            replacement: $1
+          - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+            action: replace
+            regex: ([^:]+)(?::\d+)?;(\d+)
+            replacement: $1:$2
+            target_label: __address__
+
+  # 告警规则
+  call-center-alerts.yml: |
+    groups:
+      - name: call-center-alerts
+        rules:
+          # 呼叫队列告警
+          - alert: CallQueueOverloaded
+            expr: call_queue_size > 10
+            for: 1m
+            labels:
+              severity: warning
+            annotations:
+              summary: "呼叫队列积压告警"
+              description: "队列中等待呼叫数量超过10个，当前: {{ $value }}"
+
+          # 座席离线告警
+          - alert: AllAgentsOffline
+            expr: agent_online_count == 0
+            for: 2m
+            labels:
+              severity: critical
+            annotations:
+              summary: "所有座席离线告警"
+              description: "所有座席均已离线，无法处理呼叫"
+
+          # 服务可用性告警
+          - alert: ServiceDown
+            expr: up == 0
+            for: 1m
+            labels:
+              severity: critical
+            annotations:
+              summary: "服务不可用告警"
+              description: "服务 {{ $labels.job }} 已停止响应"
+
+          # PostgreSQL 连接数告警
+          - alert: PostgreSQLHighConnections
+            expr: pg_stat_activity_count > 400
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: "PostgreSQL 连接数过高"
+              description: "当前连接数: {{ $value }}"
+
+          # Redis 内存使用告警
+          - alert: RedisHighMemoryUsage
+            expr: redis_memory_used_bytes / redis_memory_max_bytes > 0.85
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: "Redis 内存使用率过高"
+              description: "内存使用率: {{ $value | humanizePercentage }}"
+
+          # Kafka 消费延迟告警
+          - alert: KafkaConsumerLag
+            expr: kafka_consumer_group_lag > 1000
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: "Kafka 消费延迟告警"
+              description: "消费组 {{ $labels.group }} 延迟: {{ $value }}"
+
+          # 磁盘空间告警
+          - alert: DiskSpaceLow
+            expr: (node_filesystem_avail_bytes / node_filesystem_size_bytes) < 0.15
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: "磁盘空间不足告警"
+              description: "节点 {{ $labels.instance }} 磁盘剩余: {{ $value | humanizePercentage }}"
+---
+# ServiceAccount - Prometheus
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: prometheus
+  namespace: qianniu-monitoring
+---
+# ClusterRole - Prometheus 权限
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: prometheus
+rules:
+  - apiGroups: [""]
+    resources:
+      - nodes
+      - nodes/proxy
+      - services
+      - endpoints
+      - pods
+    verbs: ["get", "list", "watch"]
+  - apiGroups:
+      - extensions
+    resources:
+      - ingresses
+    verbs: ["get", "list", "watch"]
+  - nonResourceURLs: ["/metrics"]
+    verbs: ["get"]
+---
+# ClusterRoleBinding - Prometheus
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: prometheus
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: prometheus
+subjects:
+  - kind: ServiceAccount
+    name: prometheus
+    namespace: qianniu-monitoring
+---
+# PVC - Prometheus 数据存储
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: prometheus-data-pvc
+  namespace: qianniu-monitoring
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: qianniu-ssd
+  resources:
+    requests:
+      storage: 50Gi
+---
+# Deployment - Prometheus
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus
+  namespace: qianniu-monitoring
+  labels:
+    app: prometheus
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prometheus
+  template:
+    metadata:
+      labels:
+        app: prometheus
+    spec:
+      serviceAccountName: prometheus
+      containers:
+        - name: prometheus
+          image: prom/prometheus:v2.48.0
+          args:
+            - "--config.file=/etc/prometheus/prometheus.yml"
+            - "--storage.tsdb.path=/prometheus"
+            - "--storage.tsdb.retention.time=30d"
+            - "--storage.tsdb.retention.size=40GB"
+            - "--web.console.libraries=/usr/share/prometheus/console_libraries"
+            - "--web.console.templates=/usr/share/prometheus/consoles"
+            - "--web.enable-lifecycle"
+            - "--web.enable-admin-api"
+          ports:
+            - containerPort: 9090
+          volumeMounts:
+            - name: prometheus-config
+              mountPath: /etc/prometheus
+            - name: prometheus-data
+              mountPath: /prometheus
+          resources:
+            requests:
+              memory: "1Gi"
+              cpu: "500m"
+            limits:
+              memory: "4Gi"
+              cpu: "2000m"
+          livenessProbe:
+            httpGet:
+              path: /-/healthy
+              port: 9090
+            initialDelaySeconds: 30
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /-/ready
+              port: 9090
+            initialDelaySeconds: 10
+            periodSeconds: 10
+      volumes:
+        - name: prometheus-config
+          configMap:
+            name: prometheus-config
+        - name: prometheus-data
+          persistentVolumeClaim:
+            claimName: prometheus-data-pvc
+---
+# Service - Prometheus
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus
+  namespace: qianniu-monitoring
+  labels:
+    app: prometheus
+spec:
+  selector:
+    app: prometheus
+  ports:
+    - name: http
+      port: 9090
+      targetPort: 9090
+  type: ClusterIP

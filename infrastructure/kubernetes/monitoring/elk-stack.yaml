@@ -1,0 +1,492 @@
+---
+# 千牛云呼叫中心系统 - ELK Stack 日志系统配置
+# ============================================================
+# Logstash 配置
+# ============================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: logstash-config
+  namespace: qianniu-logging
+  labels:
+    app: logstash
+data:
+  logstash.yml: |
+    http.host: "0.0.0.0"
+    http.port: 9600
+    pipeline.workers: 4
+    pipeline.batch.size: 500
+    pipeline.batch.delay: 50
+    queue.type: persisted
+    queue.max_bytes: 1gb
+    log.level: info
+
+  pipelines.yml: |
+    - pipeline.id: qianniu-services
+      path.config: "/usr/share/logstash/pipeline/qianniu-services.conf"
+      pipeline.workers: 2
+
+  qianniu-services.conf: |
+    input {
+      kafka {
+        bootstrap_servers => "kafka-client.qianniu-databases.svc.cluster.local:9092"
+        topics => ["qianniu-service-logs"]
+        group_id => "logstash-consumer"
+        codec => json
+        consumer_threads => 4
+        decorate_events => true
+      }
+      beats {
+        port => 5044
+        host => "0.0.0.0"
+      }
+    }
+
+    filter {
+      # 解析 JSON 日志
+      if [message] =~ /^\{/ {
+        json {
+          source => "message"
+          target => "parsed"
+        }
+        mutate {
+          rename => {
+            "[parsed][level]" => "log_level"
+            "[parsed][service]" => "service_name"
+            "[parsed][traceId]" => "trace_id"
+            "[parsed][spanId]" => "span_id"
+            "[parsed][message]" => "log_message"
+          }
+        }
+      }
+
+      # 解析时间戳
+      date {
+        match => ["timestamp", "ISO8601", "yyyy-MM-dd HH:mm:ss.SSS"]
+        target => "@timestamp"
+        timezone => "Asia/Shanghai"
+      }
+
+      # 添加 GeoIP 信息（如果有客户端 IP）
+      if [client_ip] {
+        geoip {
+          source => "client_ip"
+          target => "geoip"
+        }
+      }
+
+      # 过滤健康检查日志
+      if [log_message] =~ /actuator\/health/ {
+        drop {}
+      }
+
+      # 标记错误日志
+      if [log_level] in ["ERROR", "FATAL"] {
+        mutate {
+          add_tag => ["error"]
+        }
+      }
+    }
+
+    output {
+      elasticsearch {
+        hosts => ["elasticsearch-client.qianniu-databases.svc.cluster.local:9200"]
+        user => "elastic"
+        password => "${ELASTIC_PASSWORD}"
+        index => "qianniu-logs-%{service_name}-%{+YYYY.MM.dd}"
+        template_name => "qianniu-logs"
+        template_overwrite => true
+        ilm_enabled => true
+        ilm_rollover_alias => "qianniu-logs"
+        ilm_pattern => "{now/d}-000001"
+        ilm_policy => "qianniu-logs-policy"
+      }
+
+      # 错误日志额外输出到告警 Topic
+      if "error" in [tags] {
+        kafka {
+          bootstrap_servers => "kafka-client.qianniu-databases.svc.cluster.local:9092"
+          topic_id => "error-alerts"
+          codec => json
+        }
+      }
+    }
+---
+# Secret - Logstash Elasticsearch 密码
+apiVersion: v1
+kind: Secret
+metadata:
+  name: logstash-secret
+  namespace: qianniu-logging
+  labels:
+    app: logstash
+type: Opaque
+stringData:
+  ELASTIC_PASSWORD: "Qianniu@2024#ES"
+---
+# Deployment - Logstash
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: logstash
+  namespace: qianniu-logging
+  labels:
+    app: logstash
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: logstash
+  template:
+    metadata:
+      labels:
+        app: logstash
+    spec:
+      containers:
+        - name: logstash
+          image: logstash:8.11.0
+          ports:
+            - containerPort: 5044
+              name: beats
+            - containerPort: 9600
+              name: http
+          env:
+            - name: ELASTIC_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: logstash-secret
+                  key: ELASTIC_PASSWORD
+            - name: LS_JAVA_OPTS
+              value: "-Xmx1g -Xms1g"
+          volumeMounts:
+            - name: logstash-config
+              mountPath: /usr/share/logstash/config/logstash.yml
+              subPath: logstash.yml
+            - name: logstash-config
+              mountPath: /usr/share/logstash/config/pipelines.yml
+              subPath: pipelines.yml
+            - name: logstash-pipeline
+              mountPath: /usr/share/logstash/pipeline/qianniu-services.conf
+              subPath: qianniu-services.conf
+            - name: logstash-data
+              mountPath: /usr/share/logstash/data
+          resources:
+            requests:
+              memory: "1Gi"
+              cpu: "500m"
+            limits:
+              memory: "2Gi"
+              cpu: "1000m"
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 9600
+            initialDelaySeconds: 60
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /?pretty
+              port: 9600
+            initialDelaySeconds: 30
+            periodSeconds: 10
+      volumes:
+        - name: logstash-config
+          configMap:
+            name: logstash-config
+            items:
+              - key: logstash.yml
+                path: logstash.yml
+              - key: pipelines.yml
+                path: pipelines.yml
+        - name: logstash-pipeline
+          configMap:
+            name: logstash-config
+            items:
+              - key: qianniu-services.conf
+                path: qianniu-services.conf
+        - name: logstash-data
+          emptyDir: {}
+---
+# Service - Logstash
+apiVersion: v1
+kind: Service
+metadata:
+  name: logstash
+  namespace: qianniu-logging
+  labels:
+    app: logstash
+spec:
+  selector:
+    app: logstash
+  ports:
+    - name: beats
+      port: 5044
+      targetPort: 5044
+    - name: http
+      port: 9600
+      targetPort: 9600
+  type: ClusterIP
+---
+# ============================================================
+# Kibana 配置
+# ============================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kibana-config
+  namespace: qianniu-logging
+  labels:
+    app: kibana
+data:
+  kibana.yml: |
+    server.host: "0.0.0.0"
+    server.port: 5601
+    server.name: "qianniu-kibana"
+    server.basePath: "/kibana"
+    server.rewriteBasePath: true
+    elasticsearch.hosts: ["http://elasticsearch-client.qianniu-databases.svc.cluster.local:9200"]
+    elasticsearch.username: "kibana_system"
+    elasticsearch.password: "${KIBANA_PASSWORD}"
+    elasticsearch.requestTimeout: 30000
+    kibana.index: ".kibana"
+    i18n.locale: "zh-CN"
+    logging.appenders.default:
+      type: console
+      layout:
+        type: json
+    logging.root.level: info
+    xpack.security.enabled: true
+    xpack.encryptedSavedObjects.encryptionKey: "qianniu_kibana_encryption_key_32chars"
+    xpack.reporting.encryptionKey: "qianniu_kibana_reporting_key_32ch"
+    xpack.security.encryptionKey: "qianniu_kibana_security_key_32cha"
+---
+# Secret - Kibana 密码
+apiVersion: v1
+kind: Secret
+metadata:
+  name: kibana-secret
+  namespace: qianniu-logging
+  labels:
+    app: kibana
+type: Opaque
+stringData:
+  KIBANA_PASSWORD: "Qianniu@2024#Kibana"
+---
+# Deployment - Kibana
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kibana
+  namespace: qianniu-logging
+  labels:
+    app: kibana
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kibana
+  template:
+    metadata:
+      labels:
+        app: kibana
+    spec:
+      containers:
+        - name: kibana
+          image: kibana:8.11.0
+          ports:
+            - containerPort: 5601
+          env:
+            - name: KIBANA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: kibana-secret
+                  key: KIBANA_PASSWORD
+          volumeMounts:
+            - name: kibana-config
+              mountPath: /usr/share/kibana/config/kibana.yml
+              subPath: kibana.yml
+          resources:
+            requests:
+              memory: "1Gi"
+              cpu: "500m"
+            limits:
+              memory: "2Gi"
+              cpu: "1000m"
+          livenessProbe:
+            httpGet:
+              path: /kibana/api/status
+              port: 5601
+            initialDelaySeconds: 60
+            periodSeconds: 15
+            timeoutSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /kibana/api/status
+              port: 5601
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+      volumes:
+        - name: kibana-config
+          configMap:
+            name: kibana-config
+---
+# Service - Kibana
+apiVersion: v1
+kind: Service
+metadata:
+  name: kibana
+  namespace: qianniu-logging
+  labels:
+    app: kibana
+spec:
+  selector:
+    app: kibana
+  ports:
+    - name: http
+      port: 5601
+      targetPort: 5601
+  type: ClusterIP
+---
+# ============================================================
+# Filebeat DaemonSet - 收集节点日志
+# ============================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: filebeat-config
+  namespace: qianniu-logging
+  labels:
+    app: filebeat
+data:
+  filebeat.yml: |
+    filebeat.inputs:
+      - type: container
+        paths:
+          - /var/log/containers/*.log
+        processors:
+          - add_kubernetes_metadata:
+              host: ${NODE_NAME}
+              matchers:
+                - logs_path:
+                    logs_path: "/var/log/containers/"
+          - drop_event:
+              when:
+                or:
+                  - contains:
+                      kubernetes.namespace: "kube-system"
+                  - contains:
+                      kubernetes.namespace: "kube-public"
+
+    processors:
+      - add_cloud_metadata: ~
+      - add_host_metadata: ~
+
+    output.logstash:
+      hosts: ["logstash.qianniu-logging.svc.cluster.local:5044"]
+      loadbalance: true
+      worker: 2
+
+    logging.level: info
+    logging.to_files: false
+---
+# ServiceAccount - Filebeat
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: filebeat
+  namespace: qianniu-logging
+---
+# ClusterRole - Filebeat
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: filebeat
+rules:
+  - apiGroups: [""]
+    resources:
+      - namespaces
+      - pods
+      - nodes
+    verbs: ["get", "watch", "list"]
+  - apiGroups: ["apps"]
+    resources:
+      - replicasets
+    verbs: ["get", "list", "watch"]
+---
+# ClusterRoleBinding - Filebeat
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: filebeat
+subjects:
+  - kind: ServiceAccount
+    name: filebeat
+    namespace: qianniu-logging
+roleRef:
+  kind: ClusterRole
+  name: filebeat
+  apiGroup: rbac.authorization.k8s.io
+---
+# DaemonSet - Filebeat
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: filebeat
+  namespace: qianniu-logging
+  labels:
+    app: filebeat
+spec:
+  selector:
+    matchLabels:
+      app: filebeat
+  template:
+    metadata:
+      labels:
+        app: filebeat
+    spec:
+      serviceAccountName: filebeat
+      terminationGracePeriodSeconds: 30
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      containers:
+        - name: filebeat
+          image: elastic/filebeat:8.11.0
+          args:
+            - "-c"
+            - "/etc/filebeat.yml"
+            - "-e"
+          env:
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+          securityContext:
+            runAsUser: 0
+          volumeMounts:
+            - name: filebeat-config
+              mountPath: /etc/filebeat.yml
+              subPath: filebeat.yml
+            - name: varlog
+              mountPath: /var/log
+              readOnly: true
+            - name: varlibdockercontainers
+              mountPath: /var/lib/docker/containers
+              readOnly: true
+          resources:
+            requests:
+              memory: "100Mi"
+              cpu: "100m"
+            limits:
+              memory: "200Mi"
+              cpu: "200m"
+      volumes:
+        - name: filebeat-config
+          configMap:
+            name: filebeat-config
+        - name: varlog
+          hostPath:
+            path: /var/log
+        - name: varlibdockercontainers
+          hostPath:
+            path: /var/lib/docker/containers

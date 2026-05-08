@@ -1,0 +1,72 @@
+groups:
+  - name: qianniu-callcenter-alerts
+    rules:
+      # 服务可用性告警
+      - alert: ServiceDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "服务 {{ $labels.job }} 不可用"
+          description: "服务 {{ $labels.job }} 已停止响应超过1分钟"
+
+      # 呼叫队列告警
+      - alert: CallQueueOverload
+        expr: call_queue_size > 10
+        for: 30s
+        labels:
+          severity: warning
+        annotations:
+          summary: "呼叫队列积压告警"
+          description: "当前队列等待呼叫数 {{ $value }} 超过阈值10"
+
+      # 座席全忙告警
+      - alert: AllAgentsBusy
+        expr: agent_idle_count == 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "所有座席均处于忙碌状态"
+          description: "已持续2分钟无空闲座席"
+
+      # 数据库连接告警
+      - alert: PostgresConnectionHigh
+        expr: pg_stat_activity_count > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "PostgreSQL 连接数过高"
+          description: "当前连接数 {{ $value }}"
+
+      # Redis 内存告警
+      - alert: RedisMemoryHigh
+        expr: redis_memory_used_bytes / redis_memory_max_bytes > 0.85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Redis 内存使用率过高"
+          description: "Redis 内存使用率 {{ $value | humanizePercentage }}"
+
+      # Kafka 消费延迟告警
+      - alert: KafkaConsumerLag
+        expr: kafka_consumer_group_lag > 1000
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Kafka 消费延迟过高"
+          description: "消费组 {{ $labels.group }} 延迟 {{ $value }} 条消息"
+
+      # JVM 内存告警
+      - alert: JvmMemoryHigh
+        expr: jvm_memory_used_bytes{area="heap"} / jvm_memory_max_bytes{area="heap"} > 0.85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "JVM 堆内存使用率过高"
+          description: "服务 {{ $labels.job }} JVM 堆内存使用率 {{ $value | humanizePercentage }}"

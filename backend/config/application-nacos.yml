@@ -1,0 +1,13 @@
+# Nacos 服务注册发现配置
+spring:
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${NACOS_SERVER:localhost:8848}
+        namespace: ${NACOS_NAMESPACE:qianniu-callcenter}
+        group: DEFAULT_GROUP
+      config:
+        server-addr: ${NACOS_SERVER:localhost:8848}
+        namespace: ${NACOS_NAMESPACE:qianniu-callcenter}
+        file-extension: yaml
+        group: DEFAULT_GROUP
