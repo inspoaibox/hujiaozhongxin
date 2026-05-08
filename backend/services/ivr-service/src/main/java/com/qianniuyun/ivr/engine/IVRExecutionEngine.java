@@ -1,7 +1,7 @@
 package com.qianniuyun.ivr.engine;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.qianniuyun.call.freeswitch.FreeSwitchClient;
+import com.qianniuyun.ivr.freeswitch.FreeSwitchClient;
 import com.qianniuyun.ivr.model.IVRFlow;
 import com.qianniuyun.ivr.model.IVRNode;
 import com.qianniuyun.ivr.model.IVRSession;
