@@ -19,4 +19,7 @@ public class FreeSwitchClient {
     public void collectDigits(String callId, int maxDigits, int timeout, Consumer<String> callback) {
         log.debug("[STUB] IVR collectDigits: callId={}", callId);
     }
+    public void hangup(String callId, String cause) {
+        log.info("[STUB] IVR hangup: callId={}, cause={}", callId, cause);
+    }
 }
