@@ -103,6 +103,28 @@ Windows PowerShell：
 
 脚本会自动复制 `.env`、拉取镜像、启动服务并打印访问地址。
 
+脚本支持两种启动模式：
+
+- `lite`（默认）：轻量模式，只启动页面和登录必需服务（推荐先用它验证 5173/5174 能打开）
+- `full`：完整模式，会启动全部中间件和全部微服务（需要更高硬件配置）
+
+示例：
+
+```bash
+# 轻量（默认）
+bash scripts/docker-up.sh
+
+# 完整
+bash scripts/docker-up.sh full
+```
+
+Windows：
+
+```powershell
+.\scripts\docker-up.ps1
+.\scripts\docker-up.ps1 full
+```
+
 也可以不用脚本，直接执行：
 
 ```bash
@@ -356,7 +378,30 @@ curl http://服务器IP:5174/health
 
 ### Q5：服务器内存不够怎么办？
 
-可以先停掉暂时不用的服务，例如录音、质检、通知：
+如果你发现执行 `docker compose ps` / `docker compose logs` 都会明显卡顿、或者 5173/5174 打不开，通常是服务器资源不足导致 Docker daemon 负载过高。
+
+推荐处理顺序：
+
+1) 先用轻量模式启动（只启动页面和登录必需服务）：
+
+```bash
+bash scripts/docker-up.sh
+```
+
+2) 如果之前已经用完整模式启动过，先停掉重型服务（Kafka / MinIO / 录音 / 质检 / 通知）再观察：
+
+```bash
+docker compose stop kafka zookeeper minio recording-service quality-service notification-service
+```
+
+3) 仍然卡死时，优先检查服务器剩余内存和磁盘（内存不足会导致 OOM，磁盘满会导致容器写日志卡死）：
+
+```bash
+free -h
+df -h
+```
+
+也可以先停掉暂时不用的服务，例如录音、质检、通知：
 
 ```bash
 docker compose stop recording-service quality-service notification-service

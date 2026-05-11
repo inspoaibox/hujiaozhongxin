@@ -200,6 +200,18 @@ Windows PowerShell：
 .\scripts\docker-up.ps1
 ```
 
+脚本默认使用轻量模式（只启动页面和登录必需服务）。如需启动全部中间件和全部微服务：
+
+```bash
+bash scripts/docker-up.sh full
+```
+
+Windows：
+
+```powershell
+.\scripts\docker-up.ps1 full
+```
+
 也可以直接使用 Docker Compose：
 ```bash
 docker compose up -d

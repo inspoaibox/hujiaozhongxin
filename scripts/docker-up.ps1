@@ -14,9 +14,46 @@ if (-not (Test-Path ".env")) {
     Write-Host "已自动创建 .env。首次部署如使用自己的 GHCR 命名空间，请编辑 .env 的 IMAGE_NAMESPACE。"
 }
 
-docker compose pull
-docker compose up -d
-docker compose ps
+$Mode = if ($args.Count -gt 0) { $args[0] } else { "lite" }
+$coreServices = @(
+    "nacos",
+    "redis",
+    "auth-service",
+    "api-gateway",
+    "agent-workspace",
+    "admin-portal"
+)
+
+switch ($Mode) {
+    "lite" {
+        Write-Host "使用轻量模式启动：只启动页面和登录必需服务。"
+        Write-Host "如需启动录音、质检、通知、WebSocket、Kafka 等完整服务，请执行：.\scripts\docker-up.ps1 full"
+        docker compose pull @coreServices
+        docker compose up -d nacos redis auth-service api-gateway
+        docker compose up -d --no-deps agent-workspace admin-portal
+        docker compose ps @coreServices
+        break
+    }
+    "core" {
+        Write-Host "使用轻量模式启动：只启动页面和登录必需服务。"
+        Write-Host "如需启动录音、质检、通知、WebSocket、Kafka 等完整服务，请执行：.\scripts\docker-up.ps1 full"
+        docker compose pull @coreServices
+        docker compose up -d nacos redis auth-service api-gateway
+        docker compose up -d --no-deps agent-workspace admin-portal
+        docker compose ps @coreServices
+        break
+    }
+    "full" {
+        Write-Host "使用完整模式启动：会启动全部中间件和全部微服务。"
+        docker compose pull
+        docker compose up -d
+        docker compose ps
+        break
+    }
+    default {
+        throw "未知模式：$Mode。用法：.\scripts\docker-up.ps1 [lite|full]"
+    }
+}
 
 function Get-EnvValue {
     param(
