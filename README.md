@@ -175,6 +175,8 @@
 
 ### 方式一：一键 Docker 部署（推荐）
 
+部署逻辑：GitHub Actions 负责构建 Docker 镜像，服务器只负责拉镜像和启动容器。服务器不需要安装 Java、Node、Maven。
+
 **1. 克隆项目**
 ```bash
 git clone https://github.com/inspoaibox/hujiaozhongxin.git
@@ -188,7 +190,11 @@ cp .env.example .env
 
 默认镜像命名空间已配置为 `inspoaibox`，对应仓库 `https://github.com/inspoaibox/hujiaozhongxin`。
 
-**3. 一键启动**
+**3. 确认 GitHub Actions 已经构建成功**
+
+打开 `https://github.com/inspoaibox/hujiaozhongxin/actions`，确认最新的 `构建并推送 Docker 镜像` 是绿色成功状态。
+
+**4. 一键启动**
 
 Linux / macOS：
 ```bash
@@ -212,17 +218,17 @@ Windows：
 .\scripts\docker-up.ps1 full
 ```
 
-也可以直接使用 Docker Compose：
+也可以直接使用 Docker Compose 启动完整模式（小服务器不推荐）：
 ```bash
 docker compose up -d
 ```
 
-**4. 查看状态**
+**5. 查看状态**
 ```bash
 docker compose ps
 ```
 
-**5. 访问系统**
+**6. 访问系统**
 
 | 服务 | 地址 | 默认账号 |
 |------|------|---------|
@@ -232,6 +238,24 @@ docker compose ps
 | Nacos 控制台 | http://localhost:8848/nacos | 默认未开启鉴权 |
 
 更详细的一键部署说明见：`docs/deployment/docker-one-click.md`。
+
+**更新代码和镜像**
+
+本地改完代码后：
+
+```bash
+git add .
+git commit -m "更新功能或修复问题"
+git push origin main
+```
+
+等待 GitHub Actions 构建成功后，在服务器执行：
+
+```bash
+cd ~/hujiaozhongxin
+git pull
+bash scripts/docker-up.sh
+```
 
 ### 方式二：本地开发启动
 

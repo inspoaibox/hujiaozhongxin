@@ -59,6 +59,82 @@ ghcr.io/inspoaibox/qianniu/agent-workspace:v1.0.0
 
 ---
 
+## 日常更新流程
+
+这个项目的日常发布流程是：
+
+```text
+本地改代码
+  -> git push 到 GitHub main
+  -> GitHub Actions 自动构建镜像
+  -> 服务器 git pull
+  -> 服务器 docker compose pull
+  -> 服务器重建容器
+```
+
+### 1. 本地提交代码
+
+```bash
+git status
+git add .
+git commit -m "更新功能或修复问题"
+git push origin main
+```
+
+### 2. 等待 Actions 成功
+
+打开：
+
+```text
+https://github.com/inspoaibox/hujiaozhongxin/actions
+```
+
+确认最新一次 `构建并推送 Docker 镜像` 是绿色成功状态。
+
+如果这一步失败，不要在服务器继续更新，因为服务器拉到的仍然可能是旧镜像。
+
+### 3. 服务器更新代码和镜像
+
+```bash
+cd ~/hujiaozhongxin
+git pull
+
+# 推荐：轻量模式，只启动页面和登录必需服务
+bash scripts/docker-up.sh
+```
+
+如果要启动完整系统：
+
+```bash
+bash scripts/docker-up.sh full
+```
+
+不用脚本时，手动命令是：
+
+```bash
+docker compose pull
+docker compose up -d --force-recreate
+```
+
+### 4. 验证
+
+```bash
+docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}' | grep qianniu
+
+curl -i http://127.0.0.1:5173/health
+curl -i http://127.0.0.1:5174/health
+curl -i http://127.0.0.1:8888/actuator/health
+```
+
+如果页面能打开但登录失败，查看：
+
+```bash
+docker logs --tail=120 qianniu-auth-service
+docker logs --tail=120 qianniu-api-gateway
+```
+
+---
+
 ## 本地拉取镜像
 
 ```bash
@@ -112,7 +188,8 @@ docker-compose -f docker-compose.prod.yml up -d
        ▼
 ┌─────────────────────────────────────────┐
 │  Job 1: 后端编译与测试（Maven）           │
-│  - mvn clean verify                     │
+│  - mvn clean package -DskipTests        │
+│  - 校验后端 JAR 可执行                   │
 │  - 上传 JAR 产物                         │
 └──────────────────┬──────────────────────┘
                    │
@@ -128,7 +205,7 @@ docker-compose -f docker-compose.prod.yml up -d
 │                                         │
 │  每个服务：                              │
 │  1. 下载对应构建产物                     │
-│  2. docker buildx build（多平台）        │
+│  2. docker buildx build（linux/amd64）  │
 │  3. 推送到 ghcr.io                      │
 │  4. 利用 GitHub Actions 缓存加速         │
 └──────────────────┬──────────────────────┘

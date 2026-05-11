@@ -33,7 +33,30 @@ docker compose version
 
 只要这两个命令能看到版本号，就可以继续。
 
-## 3. 第一次一键启动
+## 3. GitHub 构建和服务器启动的关系
+
+这个项目推荐使用“GitHub 构建，服务器运行”的方式。
+
+简单理解：
+
+```text
+本地改代码
+  -> 推送到 GitHub main 分支
+  -> GitHub Actions 自动编译后端、编译前端、构建 Docker 镜像
+  -> 镜像推送到 GHCR：ghcr.io/inspoaibox/qianniu/服务名:latest
+  -> 服务器执行 git pull + docker compose pull
+  -> 服务器用新镜像重启容器
+```
+
+服务器不需要安装 Java、Node、Maven，也不在服务器上编译代码。服务器只需要：
+
+- 拉最新仓库代码，拿到最新的 `docker-compose.yml`、`.env.example`、Nginx 配置和启动脚本
+- 拉 GitHub Actions 已经构建好的 Docker 镜像
+- 用 Docker Compose 启动或重启容器
+
+注意：只执行 `git pull` 不会更新正在运行的程序。因为真正运行的是 Docker 镜像，还必须执行 `docker compose pull` 和重建容器。
+
+## 4. 第一次一键启动
 
 在服务器进入项目根目录，也就是能看到 `docker-compose.yml` 的目录。
 
@@ -75,7 +98,25 @@ IMAGE_NAMESPACE=my-github-name
 ghcr.io/inspoaibox/qianniu/服务名:latest
 ```
 
-### 第三步：如果 GHCR 镜像是私有的，先登录
+### 第三步：确认 GitHub Actions 已经构建完成
+
+打开 GitHub 仓库：
+
+```text
+https://github.com/inspoaibox/hujiaozhongxin/actions
+```
+
+找到工作流：
+
+```text
+构建并推送 Docker 镜像
+```
+
+确认最新一次运行是绿色成功状态。只有 Actions 成功后，服务器才能拉到最新镜像。
+
+如果 Actions 还在运行或失败，服务器执行 `docker compose pull` 也拉不到新版本。
+
+### 第四步：如果 GHCR 镜像是私有的，先登录
 
 公开镜像可以跳过这一步。
 
@@ -85,7 +126,7 @@ echo 你的GitHubToken | docker login ghcr.io -u 你的GitHub用户名 --passwor
 
 GitHub Token 至少需要 `read:packages` 权限。
 
-### 第四步：一键启动
+### 第五步：一键启动
 
 最省事的方式是直接运行项目内置脚本。
 
@@ -125,7 +166,7 @@ Windows：
 .\scripts\docker-up.ps1 full
 ```
 
-也可以不用脚本，直接执行：
+也可以不用脚本，直接执行下面命令启动完整模式（小服务器不推荐）：
 
 ```bash
 docker compose up -d
@@ -133,7 +174,7 @@ docker compose up -d
 
 第一次会下载很多镜像，时间取决于服务器网络。一般几分钟到十几分钟。
 
-### 第五步：查看是否启动成功
+### 第六步：查看是否启动成功
 
 ```bash
 docker compose ps
@@ -141,7 +182,7 @@ docker compose ps
 
 看到大部分服务是 `running` 或 `healthy`，说明启动正常。
 
-## 4. 访问地址
+## 5. 访问地址
 
 假设服务器 IP 是 `1.2.3.4`，默认访问地址如下：
 
@@ -156,12 +197,18 @@ docker compose ps
 
 正式上线前必须修改默认密码。
 
-## 5. 最常用命令
+## 6. 最常用命令
 
-启动：
+轻量启动（推荐先用这个验证页面和登录）：
 
 ```bash
-docker compose up -d
+bash scripts/docker-up.sh
+```
+
+完整启动（会启动全部中间件和全部微服务，需要更高配置）：
+
+```bash
+bash scripts/docker-up.sh full
 ```
 
 停止：
@@ -194,14 +241,104 @@ docker compose logs -f
 docker compose logs -f auth-service
 ```
 
-更新到 GitHub 最新镜像：
+## 7. 更新代码和镜像
+
+当你在本地改完代码，或者我帮你改完代码后，完整更新流程是下面这样。
+
+### 第一步：把代码推送到 GitHub
+
+在本地电脑项目目录执行：
+
+```bash
+git status
+git add .
+git commit -m "更新部署和功能修复"
+git push origin main
+```
+
+如果你直接在 GitHub 网页上编辑文件，保存提交到 `main` 分支即可。
+
+### 第二步：等待 GitHub Actions 构建镜像
+
+打开：
+
+```text
+https://github.com/inspoaibox/hujiaozhongxin/actions
+```
+
+等待最新的 `构建并推送 Docker 镜像` 变成绿色成功。
+
+这一步会做这些事：
+
+- 编译后端 Java 服务
+- 校验后端 JAR 是可执行 Spring Boot JAR
+- 编译两个前端页面
+- 构建所有 Docker 镜像
+- 推送镜像到 `ghcr.io/inspoaibox/qianniu/...`
+
+### 第三步：服务器拉最新代码
+
+在服务器执行：
+
+```bash
+cd ~/hujiaozhongxin
+git pull
+```
+
+这一步只更新服务器上的配置文件、脚本和 compose 文件，不会自动更新容器。
+
+### 第四步：服务器拉最新镜像并启动
+
+推荐先用轻量模式：
+
+```bash
+bash scripts/docker-up.sh
+```
+
+脚本会自动：
+
+- 拉取核心服务最新镜像
+- 停掉完整模式才需要的重型服务
+- 等待 Nacos 和 Redis 就绪
+- 启动认证服务、API 网关、座席工作台和管理后台
+
+如果你确定服务器资源足够，并且要启动完整系统：
+
+```bash
+bash scripts/docker-up.sh full
+```
+
+不用脚本时，可以手动执行：
 
 ```bash
 docker compose pull
-docker compose up -d
+docker compose up -d --force-recreate
 ```
 
-## 6. 修改端口
+### 第五步：确认更新成功
+
+```bash
+docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}' | grep qianniu
+
+curl -i http://127.0.0.1:5173/health
+curl -i http://127.0.0.1:5174/health
+curl -i http://127.0.0.1:8888/actuator/health
+```
+
+两个前端健康检查应该返回：
+
+```text
+OK
+```
+
+如果登录失败，再看后端日志：
+
+```bash
+docker logs --tail=120 qianniu-auth-service
+docker logs --tail=120 qianniu-api-gateway
+```
+
+## 8. 修改端口
 
 打开 `.env`，可以修改这些端口：
 
@@ -222,7 +359,7 @@ AGENT_WORKSPACE_PORT=18080
 然后重启：
 
 ```bash
-docker compose up -d
+bash scripts/docker-up.sh
 ```
 
 新的座席工作台地址就是：
@@ -231,7 +368,7 @@ docker compose up -d
 http://服务器IP:18080
 ```
 
-## 7. 修改默认账号密码
+## 9. 修改默认账号密码
 
 打开 `.env`：
 
@@ -255,7 +392,7 @@ docker compose up -d auth-service
 
 注意：如果数据库里已经生成过管理员，只有首次初始化或密码为占位值时会自动写入默认密码。正式系统建议登录后走“修改密码”流程。
 
-## 8. 数据保存在哪里
+## 10. 数据保存在哪里
 
 一键部署使用 Docker named volumes 保存数据，重启容器不会丢。
 
@@ -283,7 +420,7 @@ docker compose down
 docker compose down -v
 ```
 
-## 9. 当前一键部署说明
+## 11. 当前一键部署说明
 
 当前一键部署的目标是“快速体验和演示”，不是最终生产高可用架构。
 
@@ -303,7 +440,7 @@ docker compose down -v
 - 接入 FreeSWITCH 和运营商 SIP 线路。
 - 加入 Prometheus、Grafana、日志采集和告警。
 
-## 10. 常见问题
+## 12. 常见问题
 
 ### Q1：`docker compose up -d` 提示镜像不存在？
 
@@ -414,13 +551,13 @@ docker compose stop recording-service quality-service notification-service
 保留数据重新拉镜像：
 
 ```bash
-docker compose pull
-docker compose up -d
+git pull
+bash scripts/docker-up.sh
 ```
 
 删除全部数据重新开始：
 
 ```bash
 docker compose down -v
-docker compose up -d
+bash scripts/docker-up.sh
 ```

@@ -51,7 +51,7 @@ function Wait-ContainerReady {
     $elapsed = 0
     while ($elapsed -lt $TimeoutSeconds) {
         $status = docker inspect -f "{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}" $Container 2>$null
-        if ($status -eq "healthy" -or $status -eq "running") {
+        if ($status -eq "healthy") {
             Write-Host "$Label 已就绪。"
             return
         }
@@ -75,8 +75,9 @@ switch ($Mode) {
         Wait-ContainerReady "qianniu-nacos" "Nacos" 240
         Wait-ContainerReady "qianniu-redis" "Redis" 120
         docker compose up -d --force-recreate auth-service
-        Start-Sleep -Seconds 10
+        Wait-ContainerReady "qianniu-auth-service" "认证服务" 240
         docker compose up -d --force-recreate api-gateway
+        Wait-ContainerReady "qianniu-api-gateway" "API网关" 240
         docker compose up -d --force-recreate --no-deps agent-workspace admin-portal
         docker compose ps @coreServices
         break
@@ -92,8 +93,9 @@ switch ($Mode) {
         Wait-ContainerReady "qianniu-nacos" "Nacos" 240
         Wait-ContainerReady "qianniu-redis" "Redis" 120
         docker compose up -d --force-recreate auth-service
-        Start-Sleep -Seconds 10
+        Wait-ContainerReady "qianniu-auth-service" "认证服务" 240
         docker compose up -d --force-recreate api-gateway
+        Wait-ContainerReady "qianniu-api-gateway" "API网关" 240
         docker compose up -d --force-recreate --no-deps agent-workspace admin-portal
         docker compose ps @coreServices
         break

@@ -53,7 +53,7 @@ wait_healthy() {
   echo "等待 ${label} 就绪..."
   while [ "$elapsed" -lt "$timeout_seconds" ]; do
     status="$(docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' "$container" 2>/dev/null || true)"
-    if [ "$status" = "healthy" ] || [ "$status" = "running" ]; then
+    if [ "$status" = "healthy" ]; then
       echo "${label} 已就绪。"
       return 0
     fi
@@ -77,8 +77,9 @@ case "$mode" in
     wait_healthy qianniu-nacos Nacos 240
     wait_healthy qianniu-redis Redis 120
     docker compose up -d --force-recreate auth-service
-    sleep 10
+    wait_healthy qianniu-auth-service 认证服务 240
     docker compose up -d --force-recreate api-gateway
+    wait_healthy qianniu-api-gateway API网关 240
     docker compose up -d --force-recreate --no-deps agent-workspace admin-portal
     docker compose ps "${core_services[@]}"
     ;;

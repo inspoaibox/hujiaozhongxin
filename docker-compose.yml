@@ -122,13 +122,19 @@ services:
     image: ${IMAGE_REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE:-inspoaibox}/qianniu/auth-service:${IMAGE_TAG:-latest}
     container_name: qianniu-auth-service
     depends_on:
-      - nacos
+      nacos:
+        condition: service_healthy
     environment:
       <<: *app-env
       APP_DEFAULT_ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
       APP_DEFAULT_ADMIN_PASSWORD: ${ADMIN_PASSWORD:-Admin@2025}
     volumes:
       - auth_data:/app/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8087/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
 
   customer-service:
     <<: *app-image
@@ -268,13 +274,21 @@ services:
     image: ${IMAGE_REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE:-inspoaibox}/qianniu/api-gateway:${IMAGE_TAG:-latest}
     container_name: qianniu-api-gateway
     depends_on:
-      - nacos
-      - redis
-      - auth-service
+      nacos:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      auth-service:
+        condition: service_healthy
     environment:
       <<: *app-env
     ports:
       - "${API_GATEWAY_PORT:-8888}:8888"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8888/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
 
   agent-workspace:
     <<: *app-image
