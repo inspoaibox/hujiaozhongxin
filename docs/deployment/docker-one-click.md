@@ -318,7 +318,36 @@ docker compose ps agent-workspace admin-portal api-gateway ws-gateway
 docker compose logs -f api-gateway ws-gateway
 ```
 
-### Q4：服务器内存不够怎么办？
+### Q4：5173 或 5174 提示“该网页无法正常运作”？
+
+先看前端容器是否在反复重启：
+
+```bash
+docker compose ps agent-workspace admin-portal
+```
+
+再看前端 Nginx 日志：
+
+```bash
+docker compose logs --tail=100 agent-workspace
+docker compose logs --tail=100 admin-portal
+```
+
+如果日志里出现 `host not found in upstream "api-gateway"` 或 `host not found in upstream "ws-gateway"`，说明前端镜像使用的是旧版 Nginx 配置。更新镜像后重启：
+
+```bash
+docker compose pull agent-workspace admin-portal
+docker compose up -d agent-workspace admin-portal
+```
+
+如果 `/health` 都打不开，说明问题在前端容器或端口映射，不是账号密码或页面功能：
+
+```bash
+curl http://服务器IP:5173/health
+curl http://服务器IP:5174/health
+```
+
+### Q5：服务器内存不够怎么办？
 
 可以先停掉暂时不用的服务，例如录音、质检、通知：
 
@@ -328,7 +357,7 @@ docker compose stop recording-service quality-service notification-service
 
 体验登录、座席工作台和管理后台，一般保留网关、认证、呼叫、座席、报表、Nacos、Redis、Kafka 即可。
 
-### Q5：怎么完全重新部署？
+### Q6：怎么完全重新部署？
 
 保留数据重新拉镜像：
 

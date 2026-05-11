@@ -285,6 +285,13 @@ services:
       - ws-gateway
     ports:
       - "${AGENT_WORKSPACE_PORT:-5173}:80"
+    volumes:
+      - ./frontend/agent-workspace/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
 
   admin-portal:
     <<: *app-image
@@ -295,6 +302,13 @@ services:
       - ws-gateway
     ports:
       - "${ADMIN_PORTAL_PORT:-5174}:80"
+    volumes:
+      - ./frontend/admin-portal/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
 
 volumes:
   nacos_data:
