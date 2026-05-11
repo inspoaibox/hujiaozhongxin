@@ -15,7 +15,7 @@
       :show-close="false"
     >
       <div class="incoming-call-info">
-        <el-avatar :size="64" icon="User" />
+        <el-avatar :size="64" :icon="User" />
         <div class="caller-info">
           <div class="caller-name">{{ incomingCall?.customerName || '未知来电' }}</div>
           <div class="caller-number">{{ incomingCall?.callerNumber }}</div>
@@ -31,8 +31,8 @@
     <!-- 通话中控制面板 -->
     <div v-if="isInCall" class="call-controls">
       <div class="customer-card">
-        <div class="customer-name">{{ currentCall?.customerName }}</div>
-        <div class="customer-phone">{{ currentCall?.callerNumber }}</div>
+        <div class="customer-name">{{ currentCall?.customerName || (currentCall?.callType === 'OUTBOUND' ? '外呼客户' : '未知客户') }}</div>
+        <div class="customer-phone">{{ currentCall?.callerNumber || currentCall?.calledNumber }}</div>
         <el-tag v-if="currentCall?.isVip" type="warning" size="small">VIP</el-tag>
       </div>
 
@@ -42,6 +42,7 @@
             :type="isHolding ? 'warning' : 'default'"
             circle
             :icon="isHolding ? VideoPlay : VideoPause"
+            :disabled="!canToggleHold"
             @click="toggleHold"
           />
         </el-tooltip>
@@ -51,16 +52,17 @@
             :type="isMuted ? 'warning' : 'default'"
             circle
             :icon="isMuted ? Mute : Microphone"
+            :disabled="!canControlLiveCall"
             @click="toggleMute"
           />
         </el-tooltip>
 
         <el-tooltip content="转接">
-          <el-button circle :icon="Share" @click="showTransferDialog = true" />
+          <el-button circle :icon="Share" :disabled="!canControlLiveCall" @click="showTransferDialog = true" />
         </el-tooltip>
 
         <el-tooltip content="三方通话">
-          <el-button circle :icon="Connection" @click="showConferenceDialog = true" />
+          <el-button circle :icon="Connection" :disabled="!canControlLiveCall" @click="showConferenceDialog = true" />
         </el-tooltip>
 
         <el-tooltip content="挂断">
@@ -125,7 +127,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { Phone, PhoneOff, Microphone, Mute, Share, Connection, VideoPlay, VideoPause } from '@element-plus/icons-vue'
+import { Phone, PhoneOff, Microphone, Mute, Share, Connection, VideoPlay, VideoPause, User } from '@element-plus/icons-vue'
 import { useCallStore } from '@/stores/callStore'
 import { useAgentStore } from '@/stores/agentStore'
 import { ElMessage } from 'element-plus'
@@ -148,16 +150,23 @@ const isInCall = computed(() => callStore.isInCall)
 const currentCall = computed(() => callStore.currentCall)
 const incomingCall = computed(() => callStore.incomingCall)
 const idleAgents = computed(() => agentStore.idleAgents)
+const canControlLiveCall = computed(() => currentCall.value?.status === 'ANSWERED')
+const canToggleHold = computed(() => currentCall.value?.status === 'ANSWERED' || currentCall.value?.status === 'HOLDING')
 
 const statusLabel = computed(() => {
-  if (isInCall.value) return '通话中'
   if (showIncomingCall.value) return '来电'
+  if (currentCall.value?.status === 'INITIATED' || currentCall.value?.status === 'RINGING') return '呼叫中'
+  if (currentCall.value?.status === 'HOLDING') return '保持中'
+  if (currentCall.value?.status === 'CONFERENCING') return '三方通话'
+  if (isInCall.value) return '通话中'
   return '空闲'
 })
 
 const statusTagType = computed(() => {
-  if (isInCall.value) return 'success'
   if (showIncomingCall.value) return 'warning'
+  if (currentCall.value?.status === 'INITIATED' || currentCall.value?.status === 'RINGING') return 'warning'
+  if (currentCall.value?.status === 'HOLDING') return 'warning'
+  if (isInCall.value) return 'success'
   return 'info'
 })
 
@@ -177,14 +186,29 @@ async function makeCall() {
     ElMessage.warning('请输入电话号码')
     return
   }
-  await callStore.makeOutboundCall(dialNumber.value)
-  dialNumber.value = ''
+  try {
+    await callStore.makeOutboundCall(dialNumber.value)
+    dialNumber.value = ''
+    if (isInCall.value) {
+      callDuration.value = 0
+      startDurationTimer()
+    }
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : '呼出失败')
+  }
 }
 
 async function answerCall() {
   showIncomingCall.value = false
-  await callStore.answerCall()
-  startDurationTimer()
+  try {
+    await callStore.answerCall()
+    if (isInCall.value) {
+      callDuration.value = 0
+      startDurationTimer()
+    }
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : '接听失败')
+  }
 }
 
 function rejectCall() {
@@ -193,14 +217,23 @@ function rejectCall() {
 }
 
 async function hangupCall() {
-  await callStore.hangupCall()
-  stopDurationTimer()
-  callDuration.value = 0
+  try {
+    await callStore.hangupCall()
+    stopDurationTimer()
+    callDuration.value = 0
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : '挂断失败')
+  }
 }
 
-function toggleHold() {
-  isHolding.value = !isHolding.value
-  callStore.toggleHold(isHolding.value)
+async function toggleHold() {
+  const nextHolding = !isHolding.value
+  try {
+    await callStore.toggleHold(nextHolding)
+    isHolding.value = nextHolding
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : '保持操作失败')
+  }
 }
 
 function toggleMute() {
@@ -210,9 +243,16 @@ function toggleMute() {
 
 async function transferCall() {
   if (!transferTarget.value) return
-  await callStore.transferCall(transferTarget.value)
-  showTransferDialog.value = false
-  ElMessage.success('转接成功')
+  try {
+    await callStore.transferCall(transferTarget.value)
+    showTransferDialog.value = false
+    stopDurationTimer()
+    callDuration.value = 0
+    transferTarget.value = null
+    ElMessage.success('转接成功')
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : '转接失败')
+  }
 }
 
 async function startConference() {
@@ -220,13 +260,18 @@ async function startConference() {
     ElMessage.warning('请输入第三方电话号码')
     return
   }
-  await callStore.conferenceCall(conferenceNumber.value)
-  showConferenceDialog.value = false
-  conferenceNumber.value = ''
-  ElMessage.success('三方通话已发起')
+  try {
+    await callStore.conferenceCall(conferenceNumber.value)
+    showConferenceDialog.value = false
+    conferenceNumber.value = ''
+    ElMessage.success('三方通话已发起')
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : '三方通话发起失败')
+  }
 }
 
 function startDurationTimer() {
+  stopDurationTimer()
   durationTimer = setInterval(() => {
     callDuration.value++
   }, 1000)

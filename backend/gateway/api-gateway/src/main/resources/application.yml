@@ -5,14 +5,25 @@ spring:
   application:
     name: api-gateway
   cloud:
+    nacos:
+      discovery:
+        server-addr: ${NACOS_SERVER:localhost:8848}
     gateway:
       routes:
-        - id: auth-service
+        - id: auth-service-login
           uri: lb://auth-service
           predicates:
-            - Path=/api/auth/**
+            - Path=/api/auth/login
           filters:
             - StripPrefix=1
+
+        - id: auth-service-secured
+          uri: lb://auth-service
+          predicates:
+            - Path=/api/auth/logout,/api/auth/change-password
+          filters:
+            - StripPrefix=1
+            - name: AuthFilter
 
         - id: customer-service
           uri: lb://customer-service
@@ -70,6 +81,14 @@ spring:
             - StripPrefix=1
             - name: AuthFilter
 
+        - id: recording-service
+          uri: lb://recording-service
+          predicates:
+            - Path=/api/recordings/**
+          filters:
+            - StripPrefix=1
+            - name: AuthFilter
+
         - id: notification-service
           uri: lb://notification-service
           predicates:
@@ -101,7 +120,7 @@ spring:
 
 # JWT 配置
 jwt:
-  secret: ${JWT_SECRET:qianniuyun-callcenter-jwt-secret-2025}
+  secret: ${JWT_SECRET:qianniuyun-callcenter-jwt-secret-key-2025-min32chars}
   expiration: 86400  # 24小时（秒）
 
 # 熔断配置

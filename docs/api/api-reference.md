@@ -107,7 +107,7 @@ Accept: application/json
 
 修改密码。
 
-**请求参数：**
+**请求参数：** Query 参数
 
 | 参数 | 类型 | 必填 | 说明 |
 |------|------|------|------|
@@ -301,8 +301,8 @@ Accept: application/json
 **请求体：**
 ```json
 {
-  "customerPhone": "13800138000",
-  "customerId": 100
+  "phone": "13800138000",
+  "agentId": 1
 }
 ```
 
@@ -311,7 +311,8 @@ Accept: application/json
 {
   "code": 200,
   "data": {
-    "callId": "550e8400-e29b-41d4-a716-446655440000",
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "callType": "OUTBOUND",
     "status": "INITIATED",
     "calledNumber": "13800138000"
   }
@@ -400,6 +401,23 @@ Accept: application/json
 
 ### GET /calls/{callId}/recording
 
+获取通话关联的录音信息。
+
+**响应：**
+```json
+{
+  "code": 200,
+  "data": {
+    "callId": "550e8400-e29b-41d4-a716-446655440000",
+    "recordingId": "/recordings/2026/05/11/xxx.wav",
+    "recordingReady": true,
+    "streamUrl": "/api/recordings/550e8400-e29b-41d4-a716-446655440000/stream"
+  }
+}
+```
+
+### GET /recordings/{callId}/stream
+
 获取录音播放流。
 
 **响应：** 音频流（audio/wav）
@@ -487,9 +505,40 @@ Accept: application/json
 
 ## 报表接口
 
+### GET /reports/realtime-dashboard
+
+获取实时监控面板数据。
+
+**响应：**
+```json
+{
+  "code": 200,
+  "data": {
+    "realtimeMetrics": {
+      "onlineAgents": 18,
+      "talkingAgents": 7,
+      "idleAgents": 8,
+      "wrapupAgents": 2,
+      "restAgents": 1,
+      "queueSize": 4
+    },
+    "todayStats": {
+      "inboundCalls": 286,
+      "outboundCalls": 94,
+      "answerRate": 93.6,
+      "avgWaitTime": 18
+    },
+    "agentStatusList": [],
+    "trendHours": ["09:00", "10:00"],
+    "inboundTrend": [32, 48],
+    "outboundTrend": [12, 18]
+  }
+}
+```
+
 ### POST /reports/agent-performance
 
-生成座席绩效报表（异步）。
+生成座席绩效报表（规划接口，当前基础版未实现）。
 
 **请求体：**
 ```json
@@ -516,13 +565,13 @@ Accept: application/json
 
 ### POST /reports/call-statistics
 
-生成呼叫统计报表（异步）。
+生成呼叫统计报表（规划接口，当前基础版未实现）。
 
 ---
 
 ### GET /reports/{reportId}
 
-查询报表状态和数据。
+查询报表状态和数据（规划接口，当前基础版未实现）。
 
 **响应：**
 ```json
@@ -550,7 +599,7 @@ Accept: application/json
 
 ### GET /reports/{reportId}/export
 
-导出报表文件。
+导出报表文件（规划接口，当前基础版未实现）。
 
 **查询参数：** `format` = `excel` | `pdf`
 
@@ -579,29 +628,7 @@ Accept: application/json
 
 ---
 
-### GET /dashboard/realtime
-
-获取实时监控数据。
-
-**响应：**
-```json
-{
-  "code": 200,
-  "data": {
-    "onlineAgents": 45,
-    "talkingAgents": 30,
-    "idleAgents": 10,
-    "wrapupAgents": 3,
-    "restAgents": 2,
-    "queueSize": 5,
-    "todayInbound": 320,
-    "todayOutbound": 150,
-    "answerRate": 94.5,
-    "avgWaitTime": 28,
-    "agentList": []
-  }
-}
-```
+> 实时监控数据请使用 `GET /reports/realtime-dashboard`。
 
 ---
 

@@ -144,7 +144,15 @@ public class IVRExecutionEngine {
             }
             case "TRANSFER" -> transferToAgent(session.getCallId(), node.getSkillGroup());
             case "HANGUP" -> freeSwitchClient.hangup(session.getCallId(), "NORMAL_CLEARING");
-            case "PLAY_TTS" -> freeSwitchClient.playTTS(session.getCallId(), node.getText());
+            case "PLAY_TTS" -> {
+                freeSwitchClient.playTTS(session.getCallId(), node.getText());
+                if (node.getNextNodeId() != null) {
+                    IVRFlow flow = ivrConfigService.getFlowById(session.getFlowId());
+                    session.setCurrentNodeId(node.getNextNodeId());
+                    saveSession(session);
+                    executeNode(session, flow.getNode(node.getNextNodeId()));
+                }
+            }
             default -> log.warn("未知 IVR 节点类型: {}", node.getType());
         }
     }

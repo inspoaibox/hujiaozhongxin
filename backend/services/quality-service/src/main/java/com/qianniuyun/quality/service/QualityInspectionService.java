@@ -35,6 +35,12 @@ public class QualityInspectionService {
      */
     @Transactional
     public QualityInspection submitInspection(InspectionScoreDTO dto, Long inspectorId) {
+        if (dto.getTemplateId() == null) {
+            throw new BusinessException("质检模板不能为空");
+        }
+        if (dto.getCallId() == null || dto.getCallId().isBlank()) {
+            throw new BusinessException("呼叫ID不能为空");
+        }
         QualityTemplate template = templateRepository.findById(dto.getTemplateId())
                 .orElseThrow(() -> new BusinessException("质检模板不存在"));
 
@@ -45,9 +51,10 @@ public class QualityInspectionService {
         inspection.setCallId(dto.getCallId());
         inspection.setTemplateId(dto.getTemplateId());
         inspection.setInspectorId(inspectorId);
-        inspection.setScores(dto.getScores());
+        inspection.setScores(dto.getScores() != null ? dto.getScores() : Map.of());
         inspection.setTotalScore(totalScore);
-        inspection.setPassed(totalScore >= template.getPassScore());
+        int passScore = template.getPassScore() != null ? template.getPassScore() : PASS_SCORE_THRESHOLD;
+        inspection.setPassed(totalScore >= passScore);
         inspection.setNotes(dto.getNotes());
         inspection.setSuggestions(dto.getSuggestions());
         inspection.setCreatedAt(LocalDateTime.now());
@@ -62,7 +69,7 @@ public class QualityInspectionService {
                     Map.of("type", "INSPECTION_FAILED",
                             "callId", dto.getCallId(),
                             "score", totalScore,
-                            "passScore", template.getPassScore()));
+                            "passScore", passScore));
         }
 
         log.info("质检完成: callId={}, score={}, passed={}", dto.getCallId(), totalScore, inspection.isPassed());

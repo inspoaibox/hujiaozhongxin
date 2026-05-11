@@ -57,7 +57,7 @@ public class CallDistributionEngine {
 
         // 3. 选择空闲时间最长的座席
         AgentQueryService.AgentInfo selectedAgent = availableAgents.stream()
-                .max(Comparator.comparing(AgentQueryService.AgentInfo::getIdleSince))
+                .min(Comparator.comparing(AgentQueryService.AgentInfo::getIdleSince))
                 .orElse(availableAgents.get(0));
 
         // 4. 分配呼叫
@@ -100,8 +100,11 @@ public class CallDistributionEngine {
         if (!"INBOUND".equals(event.get("callType"))) return;
 
         String callId = (String) event.get("callId");
-        String skillGroupCode = (String) event.getOrDefault("skillGroupCode", "GENERAL");
-        boolean isVip = Boolean.TRUE.equals(event.get("isVip"));
+        String skillGroupCode = event.get("skillGroupCode") != null
+                ? String.valueOf(event.get("skillGroupCode"))
+                : "GENERAL";
+        Object vipValue = event.containsKey("isVip") ? event.get("isVip") : event.get("vip");
+        boolean isVip = Boolean.TRUE.equals(vipValue) || "true".equalsIgnoreCase(String.valueOf(vipValue));
 
         distributeCall(callId, skillGroupCode, isVip);
     }

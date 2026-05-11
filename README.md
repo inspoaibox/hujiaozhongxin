@@ -148,8 +148,8 @@
 | Element Plus | 2.4 | UI 组件库 |
 | Pinia | 2.1 | 状态管理 |
 | ECharts | 5.4 | 图表可视化 |
-| SIP.js | 0.21 | WebRTC 软电话 |
-| Socket.IO | 4.6 | WebSocket 客户端 |
+| SIP.js | 0.21 | WebRTC 软电话接入基础 |
+| 原生 WebSocket | 浏览器内置 | 实时消息客户端 |
 
 ### 基础设施
 | 技术 | 用途 |
@@ -304,6 +304,8 @@ callcenter/
 | 文档 | 路径 | 说明 |
 |------|------|------|
 | 架构设计文档 | `docs/architecture/architecture.md` | 系统架构、组件设计、核心流程 |
+| 产品解决方案 | `docs/product-solution.md` | 产品定位、业务方案、架构、实施路线、验收清单 |
+| 完整小白使用手册 | `docs/user-guide/beginner-guide.md` | 每一页、每个功能、每个按钮和操作步骤 |
 | API 接口文档 | `docs/api/api-reference.md` | 所有 REST API 接口说明 |
 | 部署指南 | `docs/deployment/deployment-guide.md` | 本地开发和生产环境部署步骤 |
 | 座席操作手册 | `docs/user-guide/agent-guide.md` | 座席工作台使用说明 |

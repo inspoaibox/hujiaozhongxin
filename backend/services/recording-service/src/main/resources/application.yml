@@ -4,6 +4,10 @@ server:
 spring:
   application:
     name: recording-service
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${NACOS_SERVER:localhost:8848}
   datasource:
     url: jdbc:h2:file:./data/recording;AUTO_SERVER=TRUE
     driver-class-name: org.h2.Driver
@@ -15,6 +19,34 @@ spring:
     show-sql: false
     database-platform: org.hibernate.dialect.H2Dialect
 
+  kafka:
+    bootstrap-servers: ${KAFKA_SERVERS:localhost:29092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.add.type.headers: false
+    consumer:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
+        spring.json.use.type.headers: false
+        spring.json.value.default.type: java.util.LinkedHashMap
+
 logging:
   level:
     com.qianniuyun: INFO
+
+recording:
+  encryption:
+    key: ${RECORDING_ENCRYPTION_KEY:qianniu-recording-encryption-key-2025}
+  retention:
+    days: ${RECORDING_RETENTION_DAYS:90}
+
+minio:
+  endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
+  access-key: ${MINIO_ACCESS_KEY:qianniu}
+  secret-key: ${MINIO_SECRET_KEY:qianniu@2025}
+  bucket:
+    recordings: ${MINIO_RECORDINGS_BUCKET:qianniu-recordings}

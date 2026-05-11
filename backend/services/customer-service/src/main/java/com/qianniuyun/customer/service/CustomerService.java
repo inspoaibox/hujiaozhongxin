@@ -99,7 +99,7 @@ public class CustomerService {
      */
     @Transactional
     public void addToBlacklist(String phone, String reason, Long operatorId) {
-        if (blacklistRepository.existsByPhone(phone)) {
+        if (blacklistRepository.existsByPhoneAndRemovedAtIsNull(phone)) {
             throw new BusinessException("该号码已在黑名单中");
         }
 
@@ -118,7 +118,7 @@ public class CustomerService {
      */
     @Transactional
     public void removeFromBlacklist(String phone, Long operatorId) {
-        Blacklist blacklist = blacklistRepository.findByPhone(phone)
+        Blacklist blacklist = blacklistRepository.findByPhoneAndRemovedAtIsNull(phone)
                 .orElseThrow(() -> new BusinessException("该号码不在黑名单中"));
 
         blacklist.setRemovedBy(operatorId);

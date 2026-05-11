@@ -4,10 +4,10 @@ spring:
     nacos:
       discovery:
         server-addr: ${NACOS_SERVER:localhost:8848}
-        namespace: ${NACOS_NAMESPACE:qianniu-callcenter}
+        namespace: ${NACOS_NAMESPACE:public}
         group: DEFAULT_GROUP
       config:
         server-addr: ${NACOS_SERVER:localhost:8848}
-        namespace: ${NACOS_NAMESPACE:qianniu-callcenter}
+        namespace: ${NACOS_NAMESPACE:public}
         file-extension: yaml
         group: DEFAULT_GROUP

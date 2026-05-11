@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -41,6 +42,10 @@ public class TicketService {
      */
     @Transactional
     public Ticket createTicket(CreateTicketDTO dto, Long createdBy) {
+        if (dto.getTitle() == null || dto.getTitle().isBlank()) {
+            throw new BusinessException("工单标题不能为空");
+        }
+
         Ticket ticket = new Ticket();
         ticket.setTicketNo(TicketNoGenerator.generate());
         ticket.setTitle(dto.getTitle());
@@ -60,9 +65,12 @@ public class TicketService {
         recordHistory(ticket.getId(), null, TicketStatus.PENDING, "创建工单", createdBy);
 
         // 发布工单创建事件（触发自动分配）
-        kafkaTemplate.send("qianniu.ticket.events", ticket.getTicketNo(),
-                Map.of("eventType", "TICKET_CREATED", "ticketId", ticket.getId(),
-                        "priority", ticket.getPriority(), "category", ticket.getCategory()));
+        Map<String, Object> event = new LinkedHashMap<>();
+        event.put("eventType", "TICKET_CREATED");
+        event.put("ticketId", ticket.getId());
+        event.put("priority", ticket.getPriority());
+        event.put("category", ticket.getCategory());
+        kafkaTemplate.send("qianniu.ticket.events", ticket.getTicketNo(), event);
 
         log.info("工单创建: ticketNo={}, priority={}", ticket.getTicketNo(), ticket.getPriority());
         return ticket;
@@ -74,6 +82,9 @@ public class TicketService {
     @Transactional
     public Ticket updateStatus(Long ticketId, TicketStatus newStatus,
                                 String comment, Long operatedBy) {
+        if (newStatus == null) {
+            throw new BusinessException("工单状态不能为空");
+        }
         Ticket ticket = getTicketOrThrow(ticketId);
         TicketStatus oldStatus = ticket.getStatus();
 
@@ -110,6 +121,9 @@ public class TicketService {
      */
     @Transactional
     public void assignTicket(Long ticketId, Long assigneeId, Long operatedBy) {
+        if (assigneeId == null) {
+            throw new BusinessException("处理人不能为空");
+        }
         Ticket ticket = getTicketOrThrow(ticketId);
         ticket.setAssignedTo(assigneeId);
         ticket.setStatus(TicketStatus.IN_PROGRESS);
@@ -133,15 +147,17 @@ public class TicketService {
      * 分页查询工单
      */
     public PageResult<Ticket> queryTickets(TicketQuery query) {
+        int currentPage = Math.max(query.getPage(), 1);
+        int currentPageSize = Math.max(query.getPageSize(), 1);
         Page<Ticket> page = ticketRepository.findByConditions(
                 query.getStatus(),
                 query.getPriority(),
                 query.getAssignedTo(),
                 query.getCustomerId(),
-                PageRequest.of(query.getPage() - 1, query.getPageSize())
+                PageRequest.of(currentPage - 1, currentPageSize)
         );
         return PageResult.of(page.getContent(), page.getTotalElements(),
-                query.getPage(), query.getPageSize());
+                currentPage, currentPageSize);
     }
 
     /**

@@ -6,6 +6,7 @@
       <div class="header-actions">
         <span class="update-time">最后更新: {{ lastUpdateTime }}</span>
         <el-button :icon="FullScreen" circle @click="toggleFullscreen" />
+        <el-button size="small" @click="logout">退出</el-button>
       </div>
     </div>
 
@@ -102,12 +103,14 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { FullScreen } from '@element-plus/icons-vue'
 import * as echarts from 'echarts'
 import { useDashboardStore } from '@/stores/dashboardStore'
 import dayjs from 'dayjs'
 
 const dashboardStore = useDashboardStore()
+const router = useRouter()
 const isFullscreen = ref(false)
 const callTrendChart = ref<HTMLElement | null>(null)
 const agentStatusChart = ref<HTMLElement | null>(null)
@@ -144,6 +147,17 @@ function formatDuration(seconds: number): string {
 
 function toggleFullscreen() {
   isFullscreen.value = !isFullscreen.value
+  setTimeout(resizeCharts, 0)
+}
+
+function logout() {
+  localStorage.removeItem('token')
+  router.push('/login')
+}
+
+function resizeCharts() {
+  trendChartInstance?.resize()
+  statusChartInstance?.resize()
 }
 
 function initCharts() {
@@ -190,17 +204,29 @@ async function refreshData() {
       { data: dashboardStore.outboundTrend }
     ]
   })
+  statusChartInstance?.setOption({
+    series: [{
+      data: [
+        { value: metrics.value.talkingAgents, name: '通话中', itemStyle: { color: '#409eff' } },
+        { value: metrics.value.idleAgents, name: '空闲', itemStyle: { color: '#67c23a' } },
+        { value: metrics.value.wrapupAgents, name: '整理', itemStyle: { color: '#e6a23c' } },
+        { value: metrics.value.restAgents, name: '休息', itemStyle: { color: '#909399' } }
+      ]
+    }]
+  })
 }
 
 onMounted(async () => {
   await refreshData()
   initCharts()
+  window.addEventListener('resize', resizeCharts)
   // 每5秒刷新一次
   refreshTimer = setInterval(refreshData, 5000)
 })
 
 onUnmounted(() => {
   if (refreshTimer) clearInterval(refreshTimer)
+  window.removeEventListener('resize', resizeCharts)
   trendChartInstance?.dispose()
   statusChartInstance?.dispose()
 })

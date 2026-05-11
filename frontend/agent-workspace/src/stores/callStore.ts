@@ -13,7 +13,7 @@ export const useCallStore = defineStore('call', () => {
   const callHistory = ref<Call[]>([])
 
   const isInCall = computed(() => currentCall.value !== null &&
-    ['ANSWERED', 'HOLDING', 'CONFERENCING'].includes(currentCall.value.status))
+    ['INITIATED', 'RINGING', 'ANSWERED', 'HOLDING', 'TRANSFERRING', 'CONFERENCING'].includes(currentCall.value.status))
 
   /**
    * 发起呼出呼叫
@@ -31,6 +31,8 @@ export const useCallStore = defineStore('call', () => {
     await callApi.answerCall(incomingCall.value.callId)
     currentCall.value = {
       ...incomingCall.value,
+      id: incomingCall.value.callId,
+      callType: 'INBOUND',
       status: 'ANSWERED',
       answerAt: new Date().toISOString()
     } as Call

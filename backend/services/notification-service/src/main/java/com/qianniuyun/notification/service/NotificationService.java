@@ -8,6 +8,7 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -30,6 +31,13 @@ public class NotificationService {
     @KafkaListener(topics = "qianniu.notification.events", groupId = "notification-service")
     public void handleNotificationEvent(Map<String, Object> event) {
         String type = (String) event.get("type");
+        if (type == null) {
+            type = (String) event.get("eventType");
+        }
+        if (type == null) {
+            log.warn("通知事件缺少 type/eventType: {}", event);
+            return;
+        }
         log.debug("收到通知事件: type={}", type);
 
         switch (type) {
@@ -121,12 +129,21 @@ public class NotificationService {
         }
     }
 
+    public void sendWebSocketMessage(Long userId, String type, Map<String, Object> data) {
+        pushWebSocketMessage(userId, type, data);
+    }
+
     /**
      * 推送 WebSocket 消息
      */
     private void pushWebSocketMessage(Long userId, String type, Map<String, Object> data) {
+        Map<String, Object> message = new HashMap<>();
+        message.put("userId", userId);
+        message.put("type", type);
+        message.put("data", data);
+
         kafkaTemplate.send("qianniu.ws.push",
                 userId != null ? String.valueOf(userId) : "BROADCAST",
-                Map.of("userId", userId, "type", type, "data", data));
+                message);
     }
 }

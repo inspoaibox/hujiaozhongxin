@@ -8,4 +8,5 @@ public interface BlacklistRepository extends JpaRepository<Blacklist, Long> {
     boolean existsByPhone(String phone);
     boolean existsByPhoneAndRemovedAtIsNull(String phone);
     Optional<Blacklist> findByPhone(String phone);
+    Optional<Blacklist> findByPhoneAndRemovedAtIsNull(String phone);
 }

@@ -292,7 +292,7 @@ INSERT INTO roles (code, name, description) VALUES
 
 -- 插入默认管理员（密码：Admin@2025，需在应用层加密）
 INSERT INTO users (username, password, real_name, email, role_id) VALUES
-('admin', '$2a$10$placeholder_bcrypt_hash', '系统管理员', 'admin@qianniuyun.com',
+('admin', '__RESET_ON_STARTUP__', '系统管理员', 'admin@qianniuyun.com',
  (SELECT id FROM roles WHERE code = 'ADMIN'));
 
 -- 插入默认技能组

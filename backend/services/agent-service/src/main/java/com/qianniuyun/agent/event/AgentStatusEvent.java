@@ -12,6 +12,7 @@ public class AgentStatusEvent {
     private String agentNo;
     private AgentStatus oldStatus;
     private AgentStatus newStatus;
+    private String skillGroupCode;
     private String eventType;
     private LocalDateTime timestamp;
 }

@@ -14,5 +14,7 @@ public class CallEvent {
     private CallStatus status;
     private Long agentId;
     private Long customerId;
+    private String skillGroupCode;
+    private boolean vip;
     private LocalDateTime timestamp;
 }

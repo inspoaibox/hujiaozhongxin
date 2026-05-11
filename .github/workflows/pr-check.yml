@@ -54,4 +54,4 @@ jobs:
 
       - name: 构建验证
         working-directory: frontend/${{ matrix.app }}
-        run: npx vite build --if-present || echo "vite 未安装，跳过构建验证"
+        run: npm run build

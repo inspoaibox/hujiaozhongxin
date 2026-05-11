@@ -18,6 +18,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -35,6 +37,7 @@ public class AgentStatusService {
     private final KafkaTemplate<String, Object> kafkaTemplate;
 
     private static final String AGENT_STATUS_KEY = "agent:status:";
+    private static final String AVAILABLE_AGENT_KEY = "agent:available:";
     private static final int WRAPUP_TIMEOUT_SECONDS = 180;
 
     /**
@@ -73,15 +76,17 @@ public class AgentStatusService {
         // 更新 Redis 缓存（1小时过期）
         String cacheKey = AGENT_STATUS_KEY + agentId;
         redisTemplate.opsForValue().set(cacheKey, newStatus.name(), 1, TimeUnit.HOURS);
+        updateAvailableAgentCache(agent, newStatus);
 
         // 发布状态变更事件到 Kafka
-        AgentStatusEvent event = AgentStatusEvent.builder()
-                .agentId(agentId)
-                .agentNo(agent.getAgentNo())
-                .oldStatus(oldStatus)
-                .newStatus(newStatus)
-                .timestamp(LocalDateTime.now())
-                .build();
+        Map<String, Object> event = Map.of(
+                "agentId", agentId,
+                "agentNo", Objects.toString(agent.getAgentNo(), ""),
+                "oldStatus", oldStatus != null ? oldStatus.name() : "",
+                "newStatus", newStatus.name(),
+                "skillGroupCode", resolveSkillGroupCode(agent.getSkillGroupId()),
+                "timestamp", LocalDateTime.now().toString()
+        );
         kafkaTemplate.send("qianniu.agent.status.events", String.valueOf(agentId), event);
 
         log.info("座席 {} 状态变更: {} -> {}", agent.getAgentNo(), oldStatus, newStatus);
@@ -104,6 +109,7 @@ public class AgentStatusService {
         updateStatus(agentId, AgentStatus.OFFLINE);
         // 清除 Redis 缓存
         redisTemplate.delete(AGENT_STATUS_KEY + agentId);
+        removeAvailableAgentCache(agentId);
         log.info("座席 {} 登出", agentId);
     }
 
@@ -140,13 +146,14 @@ public class AgentStatusService {
         for (Agent agent : wrapupAgents) {
             log.warn("座席 {} 整理超时（{}秒），发送提醒", agent.getAgentNo(), WRAPUP_TIMEOUT_SECONDS);
             // 发布超时提醒事件
-            AgentStatusEvent event = AgentStatusEvent.builder()
-                    .agentId(agent.getId())
-                    .agentNo(agent.getAgentNo())
-                    .newStatus(AgentStatus.WRAPUP)
-                    .eventType("WRAPUP_TIMEOUT")
-                    .timestamp(LocalDateTime.now())
-                    .build();
+            Map<String, Object> event = Map.of(
+                    "agentId", agent.getId(),
+                    "agentNo", Objects.toString(agent.getAgentNo(), ""),
+                    "newStatus", AgentStatus.WRAPUP.name(),
+                    "eventType", "WRAPUP_TIMEOUT",
+                    "skillGroupCode", resolveSkillGroupCode(agent.getSkillGroupId()),
+                    "timestamp", LocalDateTime.now().toString()
+            );
             kafkaTemplate.send("qianniu.notification.events", String.valueOf(agent.getId()), event);
         }
     }
@@ -164,5 +171,50 @@ public class AgentStatusService {
         if (from == AgentStatus.TALKING && to == AgentStatus.REST) {
             throw new BusinessException("通话中不能直接切换为休息状态");
         }
+    }
+
+    private void updateAvailableAgentCache(Agent agent, AgentStatus newStatus) {
+        if (agent.getSkillGroupId() == null) {
+            return;
+        }
+
+        String skillGroupCode = resolveSkillGroupCode(agent.getSkillGroupId());
+        String key = AVAILABLE_AGENT_KEY + skillGroupCode;
+        String hashKey = String.valueOf(agent.getId());
+
+        if (newStatus == AgentStatus.IDLE && !agent.isTrainingMode()) {
+            redisTemplate.opsForHash().put(key, hashKey, Map.of(
+                    "agentId", agent.getId(),
+                    "agentNo", Objects.toString(agent.getAgentNo(), ""),
+                    "senior", "SENIOR".equalsIgnoreCase(agent.getLevel()),
+                    "idleSince", LocalDateTime.now().toString(),
+                    "skillGroupCode", skillGroupCode
+            ));
+            redisTemplate.expire(key, 1, TimeUnit.HOURS);
+        } else {
+            redisTemplate.opsForHash().delete(key, hashKey);
+        }
+    }
+
+    private void removeAvailableAgentCache(Long agentId) {
+        var keys = redisTemplate.keys(AVAILABLE_AGENT_KEY + "*");
+        if (keys == null) {
+            return;
+        }
+        for (String key : keys) {
+            redisTemplate.opsForHash().delete(key, String.valueOf(agentId));
+        }
+    }
+
+    private String resolveSkillGroupCode(Long skillGroupId) {
+        if (skillGroupId == null) {
+            return "GENERAL";
+        }
+        return switch (skillGroupId.intValue()) {
+            case 2 -> "TECH";
+            case 3 -> "COMPLAINT";
+            case 4 -> "VIP";
+            default -> "GENERAL";
+        };
     }
 }

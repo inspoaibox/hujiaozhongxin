@@ -12,6 +12,7 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -62,12 +63,12 @@ public class AgentWebSocketHandler extends TextWebSocketHandler {
      * 监听呼叫事件，推送给对应座席
      */
     @KafkaListener(topics = "${kafka.topics.call-events}", groupId = "ws-gateway-call")
-    public void onCallEvent(String eventJson) {
+    public void onCallEvent(Object eventPayload) {
         try {
-            Map<?, ?> event = objectMapper.readValue(eventJson, Map.class);
-            String agentId = (String) event.get("agentId");
+            Map<?, ?> event = asMap(eventPayload);
+            Object agentId = event.get("agentId");
             if (agentId != null) {
-                pushToAgent(agentId, "CALL_EVENT", event);
+                pushToAgent(String.valueOf(agentId), "CALL_EVENT", event);
             }
         } catch (Exception e) {
             log.error("处理呼叫事件失败", e);
@@ -78,14 +79,37 @@ public class AgentWebSocketHandler extends TextWebSocketHandler {
      * 监听座席状态事件，广播给监控面板
      */
     @KafkaListener(topics = "${kafka.topics.agent-status-events}", groupId = "ws-gateway-agent")
-    public void onAgentStatusEvent(String eventJson) {
+    public void onAgentStatusEvent(Object eventPayload) {
         try {
-            Map<?, ?> event = objectMapper.readValue(eventJson, Map.class);
+            Map<?, ?> event = asMap(eventPayload);
             // 广播给所有管理员会话
             broadcastToRole("ADMIN", "AGENT_STATUS_EVENT", event);
             broadcastToRole("SUPERVISOR", "AGENT_STATUS_EVENT", event);
         } catch (Exception e) {
             log.error("处理座席状态事件失败", e);
+        }
+    }
+
+    /**
+     * 监听业务通知服务推送，支持点对点和广播消息。
+     */
+    @KafkaListener(topics = "qianniu.ws.push", groupId = "ws-gateway-push")
+    public void onWebSocketPushEvent(Object eventPayload) {
+        try {
+            Map<?, ?> event = asMap(eventPayload);
+            String type = Objects.toString(event.get("type"), "MESSAGE");
+            Object userId = event.get("userId");
+            Object data = event.get("data");
+            if (data == null) {
+                data = Map.of();
+            }
+            if (userId == null) {
+                broadcastToAll(type, data);
+                return;
+            }
+            pushToAgent(String.valueOf(userId), type, data);
+        } catch (Exception e) {
+            log.error("处理 WebSocket 推送事件失败", e);
         }
     }
 
@@ -129,8 +153,36 @@ public class AgentWebSocketHandler extends TextWebSocketHandler {
         });
     }
 
+    public void broadcastToAll(String eventType, Object data) {
+        sessions.forEach((agentId, session) -> {
+            if (session.isOpen()) {
+                try {
+                    Map<String, Object> message = Map.of(
+                            "type", eventType,
+                            "data", data,
+                            "timestamp", System.currentTimeMillis()
+                    );
+                    session.sendMessage(new TextMessage(objectMapper.writeValueAsString(message)));
+                } catch (IOException e) {
+                    log.warn("广播消息失败, agentId={}", agentId, e);
+                }
+            }
+        });
+    }
+
     private String extractAgentId(WebSocketSession session) {
         return (String) session.getAttributes().get("agentId");
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<?, ?> asMap(Object payload) throws IOException {
+        if (payload instanceof Map<?, ?> map) {
+            return map;
+        }
+        if (payload instanceof String text) {
+            return objectMapper.readValue(text, Map.class);
+        }
+        return objectMapper.convertValue(payload, Map.class);
     }
 
     public int getOnlineCount() {

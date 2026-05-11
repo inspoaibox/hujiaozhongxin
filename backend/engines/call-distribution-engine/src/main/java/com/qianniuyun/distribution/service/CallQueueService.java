@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -44,7 +45,7 @@ public class CallQueueService {
 
         // 记录入队时间（用于超时检查）
         redisTemplate.opsForHash().put("call:queue:meta", callId,
-                LocalDateTime.now().toString() + ":" + skillGroupCode);
+                LocalDateTime.now() + "|" + skillGroupCode);
 
         // 更新队列监控数据
         updateQueueMetrics(skillGroupCode);
@@ -70,7 +71,7 @@ public class CallQueueService {
 
         long waitSeconds = 0;
         if (meta != null) {
-            String[] parts = meta.split(":");
+            String[] parts = meta.split("\\|", 2);
             LocalDateTime enqueueTime = LocalDateTime.parse(parts[0]);
             waitSeconds = ChronoUnit.SECONDS.between(enqueueTime, LocalDateTime.now());
         }
@@ -107,15 +108,20 @@ public class CallQueueService {
 
             if (meta == null) continue;
 
-            String[] parts = meta.split(":");
+            String[] parts = meta.split("\\|", 2);
             LocalDateTime enqueueTime = LocalDateTime.parse(parts[0]);
             long waitSeconds = ChronoUnit.SECONDS.between(enqueueTime, now);
+            String skillGroupCode = parts.length > 1 ? parts[1] : null;
 
             if (waitSeconds >= QUEUE_TIMEOUT_SECONDS) {
                 log.warn("呼叫队列超时: callId={}, waitSeconds={}", callId, waitSeconds);
                 // 发布超时事件，播放道歉语音并提供留言选项
                 kafkaTemplate.send("qianniu.call.queue.timeout", callId,
-                        Map.of("callId", callId, "waitSeconds", waitSeconds));
+                        Map.of(
+                                "callId", callId,
+                                "waitSeconds", waitSeconds,
+                                "skillGroupCode", Objects.toString(skillGroupCode, "")
+                        ));
             }
         }
     }
