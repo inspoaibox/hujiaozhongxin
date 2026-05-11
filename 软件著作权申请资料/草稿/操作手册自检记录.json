@@ -1,0 +1,38 @@
+{
+  "rounds": [
+    {
+      "round": 1,
+      "action": "初稿生成",
+      "issues": [
+        "模块说明偏薄",
+        "操作步骤重复",
+        "存在不通顺句式",
+        "部分模块说明偏技术化"
+      ]
+    },
+    {
+      "round": 2,
+      "action": "按项目真实流程扩写",
+      "issues": [
+        "需要进一步减少模板化步骤",
+        "需要让模块说明更贴近呼叫中心页面"
+      ]
+    },
+    {
+      "round": 3,
+      "action": "去除制式表达并补充结果反馈",
+      "issues": [
+        "需复核截图预留数量和软件名称版本一致性"
+      ]
+    },
+    {
+      "round": 4,
+      "action": "最终复核",
+      "issues": []
+    }
+  ],
+  "module_count": 13,
+  "screenshot_placeholders": 14,
+  "final_status": "pass",
+  "unresolved_issues": []
+}

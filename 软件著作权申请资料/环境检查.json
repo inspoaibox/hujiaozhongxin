@@ -7,11 +7,11 @@
     "python_docx": false,
     "pandoc_preview": false,
     "docx_openxml_full": false,
-    "dotnet_sdk": false
+    "dotnet_sdk": true
   },
   "versions": {
     "pandoc": "not found",
-    "dotnet": "The command could not be loaded, possibly because:"
+    "dotnet": "8.0.420"
   },
   "final_docx_mode": "basic-ooxml",
   "recommendation": "完整 DOCX OpenXML 环境未就绪。可以继续使用兜底 DOCX 生成；如需更规范的 Word 结构和校验，请先安装 .NET SDK 并运行 vendor/docx-toolkit/scripts/setup.sh。",

@@ -1,0 +1,92 @@
+{
+  "project_root": "D:\\website-ruanzhu\\hujiaozhongxin",
+  "project_name": "hujiaozhongxin",
+  "software_name_candidate": "hujiaozhongxin",
+  "package": {
+    "name": "",
+    "path": "",
+    "version": "V1.0",
+    "scripts": {},
+    "dependency_names": []
+  },
+  "frameworks": [
+    "Vue"
+  ],
+  "language": "Vue、TypeScript",
+  "source": {
+    "file_count": 23,
+    "line_count": 1971,
+    "extension_counts": {
+      ".html": 2,
+      ".ts": 14,
+      ".vue": 7
+    },
+    "category_counts": {
+      "api": 3,
+      "component": 1,
+      "entry": 4,
+      "page": 4,
+      "route": 2,
+      "source": 5,
+      "state": 3,
+      "utility": 1
+    },
+    "categorized_files": {
+      "entry": [
+        "frontend/admin-portal/src/App.vue",
+        "frontend/admin-portal/src/main.ts",
+        "frontend/agent-workspace/src/App.vue",
+        "frontend/agent-workspace/src/main.ts"
+      ],
+      "route": [
+        "frontend/admin-portal/src/router/index.ts",
+        "frontend/agent-workspace/src/router/index.ts"
+      ],
+      "page": [
+        "frontend/admin-portal/src/views/LoginView.vue",
+        "frontend/admin-portal/src/views/dashboard/RealtimeDashboard.vue",
+        "frontend/agent-workspace/src/views/LoginView.vue",
+        "frontend/agent-workspace/src/views/WorkspaceView.vue"
+      ],
+      "component": [
+        "frontend/agent-workspace/src/components/SoftPhone.vue"
+      ],
+      "api": [
+        "frontend/admin-portal/src/api/authApi.ts",
+        "frontend/agent-workspace/src/api/authApi.ts",
+        "frontend/agent-workspace/src/api/callApi.ts"
+      ],
+      "state": [
+        "frontend/admin-portal/src/stores/dashboardStore.ts",
+        "frontend/agent-workspace/src/stores/agentStore.ts",
+        "frontend/agent-workspace/src/stores/callStore.ts"
+      ],
+      "utility": [
+        "frontend/agent-workspace/src/composables/useWebSocket.ts"
+      ],
+      "source": [
+        "frontend/admin-portal/index.html",
+        "frontend/admin-portal/vite.config.ts",
+        "frontend/agent-workspace/index.html",
+        "frontend/agent-workspace/vite.config.ts",
+        "frontend/agent-workspace/src/types/call.ts"
+      ]
+    }
+  },
+  "routes": [
+    "/",
+    "/login"
+  ],
+  "readme_excerpt": "# åçäºå¼å«ä¸­å¿ç³»ç»\n> **æ·±å³å¸åçäºç§ææéå\n¬å¸** åºå\n> çæ¬ï¼1.0.0 | è®¸å¯è¯ï¼åä¸è½¯ä»¶ï¼ä¿çæææå©\n---\n## ç®å½\n- [é¡¹ç®ç®ä»](#é¡¹ç®ç®ä»)\n- [åè½ç¹æ§](#åè½ç¹æ§)\n- [ç³»ç»æ¶æ](#ç³»ç»æ¶æ)\n- [ææ¯æ ](#ææ¯æ )\n- [å¿«éå¼å§](#å¿«éå¼å§)\n- [é¡¹ç®ç»æ](#é¡¹ç®ç»æ)\n- [ææ¡£ç´¢å¼](#ææ¡£ç´¢å¼)\n- [èç³»æä»¬](#èç³»æä»¬)\n---\n## é¡¹ç®ç®ä»\nåçäºå¼å«ä¸­å¿ç³»ç»æ¯ä¸å¥ä¼ä¸çº§å\n¨æ¸ éå®¢æ·æå¡å¹³å°ï¼éç¨å¾®æå¡æ¶æè®¾è®¡ï¼æ¯æé«å¹¶åãé«å¯ç¨çå¼å«å¤çè½åãç³»ç»éæäºçµè¯ç½å\n³ãIVR è¯­é³å¯¼èªãæºè½å¼å«åé\nãå®æ¶çæ§ãå·¥åç®¡çç­æ ¸å¿åè½æ¨¡åï¼å¸®å©ä¼ä¸æåå®¢æ·æå¡è´¨éåè¿è¥æçã\n**æ ¸å¿ææ ï¼**\n| ææ  | ç®æ å¼ |\n|------|--------|\n| ç³»ç»å¯ç¨æ§ | 99.9%+ |\n| å¹¶åå¼å«æ¯æ | 1000+ |\n| å¨çº¿åº§å¸­æ¯æ | 10000+ |\n| å¼å«åé\nå»¶è¿ | < 2 ç§ |\n| ç¶ææ´æ°å»¶è¿ | < 1 ç§ |\n| API ååºæ¶é´ | < 200ms (P99) |\n---\n## åè½ç¹æ§\n### å¼å«ç®¡ç\n- â\nå¼å\n¥/å¼åºå¼å«å\n¨çå½å¨æç®¡ç\n- â\næºè½ IVR è¯­é³å¯¼èªï¼æ¯æ 3 å±èåï¼\n- â\næè½ç»è·¯ç± + æé¿ç©ºé²æ¶é´åé\nç®æ³\n- â\nVIP å®¢æ·ä¼å\nåé\n\n- â\nå¼å«è½¬æ¥ï¼ç²è½¬/ååè½¬ï¼åä¸æ¹éè¯",
+  "run_command_candidates": [],
+  "feature_candidates": [
+    "login",
+    "admin portal LoginView",
+    "dashboard RealtimeDashboard",
+    "agent workspace LoginView",
+    "agent workspace WorkspaceView",
+    "authApi",
+    "callApi",
+    "SoftPhone"
+  ]
+}

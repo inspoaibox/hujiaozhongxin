@@ -18,7 +18,7 @@ WORKDIR /app
 COPY target/call-service-*.jar app.jar
 
 # H2 演示库和录音临时文件目录
-RUN mkdir -p /app/data /recordings && chown -R qianniu:qianniu /app/data /recordings
+RUN mkdir -p /app/data /app/tmp /recordings && chown -R qianniu:qianniu /app/data /app/tmp /recordings
 
 USER qianniu
 

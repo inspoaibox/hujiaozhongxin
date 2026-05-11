@@ -57,6 +57,7 @@ wait_healthy() {
       echo "${label} 已就绪。"
       return 0
     fi
+    echo "${label} 当前状态：${status:-unknown}，继续等待..."
     sleep 5
     elapsed=$((elapsed + 5))
   done
@@ -73,7 +74,7 @@ case "$mode" in
     docker compose stop "${full_only_services[@]}" || true
     docker compose rm -f -s "${full_only_services[@]}" || true
     docker compose pull "${core_services[@]}"
-    docker compose up -d --force-recreate nacos redis
+    docker compose up -d nacos redis
     wait_healthy qianniu-nacos Nacos 240
     wait_healthy qianniu-redis Redis 120
     docker compose up -d --force-recreate auth-service

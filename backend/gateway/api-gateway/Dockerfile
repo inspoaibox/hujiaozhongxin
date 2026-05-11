@@ -11,7 +11,7 @@ WORKDIR /app
 
 COPY target/api-gateway-*.jar app.jar
 
-RUN mkdir -p /app/data && chown -R qianniu:qianniu /app/data
+RUN mkdir -p /app/data /app/tmp && chown -R qianniu:qianniu /app/data /app/tmp
 
 USER qianniu
 

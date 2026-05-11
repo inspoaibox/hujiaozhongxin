@@ -1,0 +1,5 @@
+{
+  "environment_confirmed": true,
+  "confirmation_note": "用户选择安装完整 DOCX 环境；已通过 Windows PowerShell setup.ps1 -Minimal 验证，.NET SDK 8.0.420 可用，docx-toolkit 项目构建成功并生成测试 DOCX。bash env_check.sh 因当前 Windows/WSL 未安装发行版产生误判，后续以 Windows PowerShell 验证结果为准。",
+  "confirmed_at": "2026-05-11T10:13:08+00:00"
+}

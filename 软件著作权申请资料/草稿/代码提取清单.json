@@ -1,0 +1,411 @@
+{
+  "software_name": "千牛云呼叫中心系统",
+  "version": "V1.0",
+  "project_root": "D:\\website-ruanzhu\\hujiaozhongxin",
+  "file_count": 43,
+  "material_line_count": 4388,
+  "source_line_count": 4835,
+  "selected_source_line_count": 4302,
+  "lines_per_page": 60,
+  "total_pages": 74,
+  "target_pages": 60,
+  "available_candidate_line_count": 11754,
+  "available_candidate_pages": 196,
+  "supplement_status": "候选源码可达到前30页/后30页要求",
+  "mode": "front30_back30",
+  "selection_file": "软件著作权申请资料\\草稿\\代码文件选择.json",
+  "outputs": [
+    "代码-前30页.md",
+    "代码-后30页.md"
+  ],
+  "files": [
+    {
+      "path": "frontend/agent-workspace/src/main.ts",
+      "source_line_count": 19,
+      "selected_line_start": 1,
+      "selected_line_end": 19,
+      "selected_line_count": 19,
+      "material_line_start": 1,
+      "material_line_end": 21
+    },
+    {
+      "path": "frontend/agent-workspace/src/router/index.ts",
+      "source_line_count": 32,
+      "selected_line_start": 1,
+      "selected_line_end": 32,
+      "selected_line_count": 32,
+      "material_line_start": 22,
+      "material_line_end": 55
+    },
+    {
+      "path": "frontend/agent-workspace/src/views/LoginView.vue",
+      "source_line_count": 110,
+      "selected_line_start": 1,
+      "selected_line_end": 110,
+      "selected_line_count": 110,
+      "material_line_start": 56,
+      "material_line_end": 167
+    },
+    {
+      "path": "frontend/agent-workspace/src/views/WorkspaceView.vue",
+      "source_line_count": 116,
+      "selected_line_start": 1,
+      "selected_line_end": 116,
+      "selected_line_count": 116,
+      "material_line_start": 168,
+      "material_line_end": 285
+    },
+    {
+      "path": "frontend/agent-workspace/src/components/SoftPhone.vue",
+      "source_line_count": 391,
+      "selected_line_start": 1,
+      "selected_line_end": 270,
+      "selected_line_count": 270,
+      "material_line_start": 286,
+      "material_line_end": 557
+    },
+    {
+      "path": "frontend/agent-workspace/src/stores/callStore.ts",
+      "source_line_count": 123,
+      "selected_line_start": 1,
+      "selected_line_end": 123,
+      "selected_line_count": 123,
+      "material_line_start": 558,
+      "material_line_end": 682
+    },
+    {
+      "path": "frontend/agent-workspace/src/stores/agentStore.ts",
+      "source_line_count": 50,
+      "selected_line_start": 1,
+      "selected_line_end": 50,
+      "selected_line_count": 50,
+      "material_line_start": 683,
+      "material_line_end": 734
+    },
+    {
+      "path": "frontend/agent-workspace/src/api/callApi.ts",
+      "source_line_count": 137,
+      "selected_line_start": 1,
+      "selected_line_end": 137,
+      "selected_line_count": 137,
+      "material_line_start": 735,
+      "material_line_end": 873
+    },
+    {
+      "path": "frontend/agent-workspace/src/composables/useWebSocket.ts",
+      "source_line_count": 114,
+      "selected_line_start": 1,
+      "selected_line_end": 114,
+      "selected_line_count": 114,
+      "material_line_start": 874,
+      "material_line_end": 989
+    },
+    {
+      "path": "frontend/agent-workspace/src/types/call.ts",
+      "source_line_count": 46,
+      "selected_line_start": 1,
+      "selected_line_end": 46,
+      "selected_line_count": 46,
+      "material_line_start": 990,
+      "material_line_end": 1037
+    },
+    {
+      "path": "backend/services/call-service/src/main/java/com/qianniuyun/call/controller/CallController.java",
+      "source_line_count": 96,
+      "selected_line_start": 1,
+      "selected_line_end": 96,
+      "selected_line_count": 96,
+      "material_line_start": 1038,
+      "material_line_end": 1135
+    },
+    {
+      "path": "backend/services/call-service/src/main/java/com/qianniuyun/call/entity/Call.java",
+      "source_line_count": 34,
+      "selected_line_start": 1,
+      "selected_line_end": 34,
+      "selected_line_count": 34,
+      "material_line_start": 1136,
+      "material_line_end": 1171
+    },
+    {
+      "path": "backend/services/call-service/src/main/java/com/qianniuyun/call/freeswitch/FreeSwitchClient.java",
+      "source_line_count": 64,
+      "selected_line_start": 1,
+      "selected_line_end": 64,
+      "selected_line_count": 64,
+      "material_line_start": 1172,
+      "material_line_end": 1237
+    },
+    {
+      "path": "backend/services/call-service/src/main/java/com/qianniuyun/call/service/CallService.java",
+      "source_line_count": 358,
+      "selected_line_start": 1,
+      "selected_line_end": 330,
+      "selected_line_count": 330,
+      "material_line_start": 1238,
+      "material_line_end": 1569
+    },
+    {
+      "path": "backend/engines/call-distribution-engine/src/main/java/com/qianniuyun/distribution/engine/CallDistributionEngine.java",
+      "source_line_count": 124,
+      "selected_line_start": 1,
+      "selected_line_end": 124,
+      "selected_line_count": 124,
+      "material_line_start": 1570,
+      "material_line_end": 1695
+    },
+    {
+      "path": "backend/engines/call-distribution-engine/src/main/java/com/qianniuyun/distribution/service/CallQueueService.java",
+      "source_line_count": 142,
+      "selected_line_start": 1,
+      "selected_line_end": 142,
+      "selected_line_count": 142,
+      "material_line_start": 1696,
+      "material_line_end": 1839
+    },
+    {
+      "path": "backend/engines/call-distribution-engine/src/main/java/com/qianniuyun/distribution/service/AgentQueryService.java",
+      "source_line_count": 59,
+      "selected_line_start": 1,
+      "selected_line_end": 59,
+      "selected_line_count": 59,
+      "material_line_start": 1840,
+      "material_line_end": 1900
+    },
+    {
+      "path": "backend/gateway/ws-gateway/src/main/java/com/qianniuyun/wsgateway/handler/AgentWebSocketHandler.java",
+      "source_line_count": 191,
+      "selected_line_start": 1,
+      "selected_line_end": 165,
+      "selected_line_count": 165,
+      "material_line_start": 1901,
+      "material_line_end": 2067
+    },
+    {
+      "path": "backend/gateway/api-gateway/src/main/java/com/qianniuyun/gateway/filter/AuthFilter.java",
+      "source_line_count": 83,
+      "selected_line_start": 1,
+      "selected_line_end": 83,
+      "selected_line_count": 83,
+      "material_line_start": 2068,
+      "material_line_end": 2152
+    },
+    {
+      "path": "backend/services/auth-service/src/main/java/com/qianniuyun/auth/controller/AuthController.java",
+      "source_line_count": 65,
+      "selected_line_start": 1,
+      "selected_line_end": 65,
+      "selected_line_count": 65,
+      "material_line_start": 2153,
+      "material_line_end": 2219
+    },
+    {
+      "path": "backend/services/auth-service/src/main/java/com/qianniuyun/auth/service/AuthService.java",
+      "source_line_count": 121,
+      "selected_line_start": 1,
+      "selected_line_end": 121,
+      "selected_line_count": 121,
+      "material_line_start": 2220,
+      "material_line_end": 2342
+    },
+    {
+      "path": "backend/services/agent-service/src/main/java/com/qianniuyun/agent/controller/AgentController.java",
+      "source_line_count": 90,
+      "selected_line_start": 1,
+      "selected_line_end": 90,
+      "selected_line_count": 90,
+      "material_line_start": 2343,
+      "material_line_end": 2434
+    },
+    {
+      "path": "backend/services/agent-service/src/main/java/com/qianniuyun/agent/service/AgentStatusService.java",
+      "source_line_count": 220,
+      "selected_line_start": 1,
+      "selected_line_end": 170,
+      "selected_line_count": 170,
+      "material_line_start": 2435,
+      "material_line_end": 2606
+    },
+    {
+      "path": "backend/services/customer-service/src/main/java/com/qianniuyun/customer/controller/CustomerController.java",
+      "source_line_count": 61,
+      "selected_line_start": 1,
+      "selected_line_end": 61,
+      "selected_line_count": 61,
+      "material_line_start": 2607,
+      "material_line_end": 2669
+    },
+    {
+      "path": "backend/services/customer-service/src/main/java/com/qianniuyun/customer/service/CustomerService.java",
+      "source_line_count": 138,
+      "selected_line_start": 1,
+      "selected_line_end": 138,
+      "selected_line_count": 138,
+      "material_line_start": 2670,
+      "material_line_end": 2809
+    },
+    {
+      "path": "backend/services/ticket-service/src/main/java/com/qianniuyun/ticket/controller/TicketController.java",
+      "source_line_count": 53,
+      "selected_line_start": 1,
+      "selected_line_end": 53,
+      "selected_line_count": 53,
+      "material_line_start": 2810,
+      "material_line_end": 2864
+    },
+    {
+      "path": "backend/services/ticket-service/src/main/java/com/qianniuyun/ticket/service/TicketService.java",
+      "source_line_count": 204,
+      "selected_line_start": 1,
+      "selected_line_end": 175,
+      "selected_line_count": 175,
+      "material_line_start": 2865,
+      "material_line_end": 3041
+    },
+    {
+      "path": "backend/services/ivr-service/src/main/java/com/qianniuyun/ivr/engine/IVRExecutionEngine.java",
+      "source_line_count": 184,
+      "selected_line_start": 1,
+      "selected_line_end": 155,
+      "selected_line_count": 155,
+      "material_line_start": 3042,
+      "material_line_end": 3198
+    },
+    {
+      "path": "backend/services/notification-service/src/main/java/com/qianniuyun/notification/service/NotificationService.java",
+      "source_line_count": 149,
+      "selected_line_start": 1,
+      "selected_line_end": 115,
+      "selected_line_count": 115,
+      "material_line_start": 3199,
+      "material_line_end": 3315
+    },
+    {
+      "path": "backend/services/quality-service/src/main/java/com/qianniuyun/quality/service/QualityInspectionService.java",
+      "source_line_count": 86,
+      "selected_line_start": 1,
+      "selected_line_end": 86,
+      "selected_line_count": 86,
+      "material_line_start": 3316,
+      "material_line_end": 3403
+    },
+    {
+      "path": "backend/services/recording-service/src/main/java/com/qianniuyun/recording/service/RecordingService.java",
+      "source_line_count": 205,
+      "selected_line_start": 1,
+      "selected_line_end": 130,
+      "selected_line_count": 130,
+      "material_line_start": 3404,
+      "material_line_end": 3535
+    },
+    {
+      "path": "backend/services/report-service/src/main/java/com/qianniuyun/report/service/ReportService.java",
+      "source_line_count": 180,
+      "selected_line_start": 1,
+      "selected_line_end": 120,
+      "selected_line_count": 120,
+      "material_line_start": 3536,
+      "material_line_end": 3657
+    },
+    {
+      "path": "frontend/admin-portal/src/main.ts",
+      "source_line_count": 18,
+      "selected_line_start": 1,
+      "selected_line_end": 18,
+      "selected_line_count": 18,
+      "material_line_start": 3658,
+      "material_line_end": 3677
+    },
+    {
+      "path": "frontend/admin-portal/src/router/index.ts",
+      "source_line_count": 32,
+      "selected_line_start": 1,
+      "selected_line_end": 32,
+      "selected_line_count": 32,
+      "material_line_start": 3678,
+      "material_line_end": 3711
+    },
+    {
+      "path": "frontend/admin-portal/src/views/LoginView.vue",
+      "source_line_count": 107,
+      "selected_line_start": 1,
+      "selected_line_end": 107,
+      "selected_line_count": 107,
+      "material_line_start": 3712,
+      "material_line_end": 3820
+    },
+    {
+      "path": "frontend/admin-portal/src/views/dashboard/RealtimeDashboard.vue",
+      "source_line_count": 301,
+      "selected_line_start": 1,
+      "selected_line_end": 220,
+      "selected_line_count": 220,
+      "material_line_start": 3821,
+      "material_line_end": 4042
+    },
+    {
+      "path": "frontend/admin-portal/src/stores/dashboardStore.ts",
+      "source_line_count": 113,
+      "selected_line_start": 1,
+      "selected_line_end": 113,
+      "selected_line_count": 113,
+      "material_line_start": 4043,
+      "material_line_end": 4157
+    },
+    {
+      "path": "frontend/admin-portal/src/api/authApi.ts",
+      "source_line_count": 60,
+      "selected_line_start": 1,
+      "selected_line_end": 60,
+      "selected_line_count": 60,
+      "material_line_start": 4158,
+      "material_line_end": 4219
+    },
+    {
+      "path": "backend/common/common-model/src/main/java/com/qianniuyun/common/enums/AgentStatus.java",
+      "source_line_count": 31,
+      "selected_line_start": 1,
+      "selected_line_end": 31,
+      "selected_line_count": 31,
+      "material_line_start": 4220,
+      "material_line_end": 4252
+    },
+    {
+      "path": "backend/common/common-model/src/main/java/com/qianniuyun/common/enums/CallStatus.java",
+      "source_line_count": 37,
+      "selected_line_start": 1,
+      "selected_line_end": 37,
+      "selected_line_count": 37,
+      "material_line_start": 4253,
+      "material_line_end": 4291
+    },
+    {
+      "path": "backend/common/common-model/src/main/java/com/qianniuyun/common/enums/TicketStatus.java",
+      "source_line_count": 22,
+      "selected_line_start": 1,
+      "selected_line_end": 22,
+      "selected_line_count": 22,
+      "material_line_start": 4292,
+      "material_line_end": 4315
+    },
+    {
+      "path": "backend/common/common-model/src/main/java/com/qianniuyun/common/model/Result.java",
+      "source_line_count": 45,
+      "selected_line_start": 1,
+      "selected_line_end": 45,
+      "selected_line_count": 45,
+      "material_line_start": 4316,
+      "material_line_end": 4362
+    },
+    {
+      "path": "backend/common/common-utils/src/main/java/com/qianniuyun/common/utils/TicketNoGenerator.java",
+      "source_line_count": 24,
+      "selected_line_start": 1,
+      "selected_line_end": 24,
+      "selected_line_count": 24,
+      "material_line_start": 4363,
+      "material_line_end": 4388
+    }
+  ],
+  "safe_software_filename": "千牛云呼叫中心系统"
+}

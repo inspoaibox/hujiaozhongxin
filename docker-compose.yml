@@ -12,6 +12,7 @@ x-app-env: &app-env
   MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-qianniu}
   MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-qianniu@2025}
   JWT_SECRET: ${JWT_SECRET:-qianniuyun-callcenter-jwt-secret-key-2025-min32chars}
+  JAVA_TOOL_OPTIONS: -Djava.io.tmpdir=/app/tmp
 
 x-app-image: &app-image
   restart: unless-stopped

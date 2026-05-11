@@ -56,6 +56,10 @@ function Wait-ContainerReady {
             return
         }
 
+        if (-not $status) {
+            $status = "unknown"
+        }
+        Write-Host "$Label 当前状态：$status，继续等待..."
         Start-Sleep -Seconds 5
         $elapsed += 5
     }
@@ -71,7 +75,7 @@ switch ($Mode) {
         docker compose stop @fullOnlyServices
         docker compose rm -f -s @fullOnlyServices
         docker compose pull @coreServices
-        docker compose up -d --force-recreate nacos redis
+        docker compose up -d nacos redis
         Wait-ContainerReady "qianniu-nacos" "Nacos" 240
         Wait-ContainerReady "qianniu-redis" "Redis" 120
         docker compose up -d --force-recreate auth-service
@@ -89,7 +93,7 @@ switch ($Mode) {
         docker compose stop @fullOnlyServices
         docker compose rm -f -s @fullOnlyServices
         docker compose pull @coreServices
-        docker compose up -d --force-recreate nacos redis
+        docker compose up -d nacos redis
         Wait-ContainerReady "qianniu-nacos" "Nacos" 240
         Wait-ContainerReady "qianniu-redis" "Redis" 120
         docker compose up -d --force-recreate auth-service
