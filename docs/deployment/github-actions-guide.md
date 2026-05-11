@@ -25,8 +25,8 @@ ghcr.io/{你的GitHub用户名}/qianniu/{服务名}:{标签}
 
 例如：
 ```
-ghcr.io/qianniuyun/qianniu/call-service:latest
-ghcr.io/qianniuyun/qianniu/agent-workspace:v1.0.0
+ghcr.io/inspoaibox/qianniu/call-service:latest
+ghcr.io/inspoaibox/qianniu/agent-workspace:v1.0.0
 ```
 
 **优点：**
@@ -66,7 +66,7 @@ ghcr.io/qianniuyun/qianniu/agent-workspace:v1.0.0
 echo $GITHUB_TOKEN | docker login ghcr.io -u YOUR_GITHUB_USERNAME --password-stdin
 
 # 拉取镜像
-docker pull ghcr.io/qianniuyun/qianniu/call-service:latest
+docker pull ghcr.io/inspoaibox/qianniu/call-service:latest
 
 # 运行单个服务（测试用）
 docker run -d \
@@ -74,7 +74,7 @@ docker run -d \
   -e DB_HOST=your-db-host \
   -e REDIS_HOST=your-redis-host \
   -e KAFKA_SERVERS=your-kafka:9092 \
-  ghcr.io/qianniuyun/qianniu/call-service:latest
+  ghcr.io/inspoaibox/qianniu/call-service:latest
 ```
 
 ---
@@ -86,7 +86,7 @@ docker run -d \
 version: '3.8'
 services:
   call-service:
-    image: ghcr.io/qianniuyun/qianniu/call-service:latest
+    image: ghcr.io/inspoaibox/qianniu/call-service:latest
     ports:
       - "8080:8080"
     environment:

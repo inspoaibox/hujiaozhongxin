@@ -54,10 +54,16 @@ Copy-Item .env.example .env
 打开 `.env`，找到：
 
 ```env
-IMAGE_NAMESPACE=qianniuyun
+IMAGE_NAMESPACE=inspoaibox
 ```
 
-如果镜像在你自己的 GitHub 账号或组织下，把它改成你的 GitHub 用户名或组织名。例如：
+当前仓库是：
+
+```text
+https://github.com/inspoaibox/hujiaozhongxin
+```
+
+所以默认镜像命名空间就是 `inspoaibox`。如果以后项目迁移到其他 GitHub 账号或组织下，再把它改成新的 GitHub 用户名或组织名。例如：
 
 ```env
 IMAGE_NAMESPACE=my-github-name
@@ -66,7 +72,7 @@ IMAGE_NAMESPACE=my-github-name
 镜像完整地址规则是：
 
 ```text
-ghcr.io/你的GitHub用户名/qianniu/服务名:latest
+ghcr.io/inspoaibox/qianniu/服务名:latest
 ```
 
 ### 第三步：如果 GHCR 镜像是私有的，先登录
@@ -282,7 +288,7 @@ docker compose down -v
 先确认 GitHub Actions 是否已经构建并推送镜像。然后检查 `.env`：
 
 ```env
-IMAGE_NAMESPACE=你的GitHub用户名或组织名
+IMAGE_NAMESPACE=inspoaibox
 IMAGE_TAG=latest
 ```
 

@@ -177,8 +177,8 @@
 
 **1. 克隆项目**
 ```bash
-git clone https://github.com/qianniuyun/callcenter.git
-cd callcenter
+git clone https://github.com/inspoaibox/hujiaozhongxin.git
+cd hujiaozhongxin
 ```
 
 **2. 复制配置文件**
@@ -186,7 +186,7 @@ cd callcenter
 cp .env.example .env
 ```
 
-如果镜像在你自己的 GitHub 账号或组织下，打开 `.env`，把 `IMAGE_NAMESPACE` 改成你的 GitHub 用户名或组织名。
+默认镜像命名空间已配置为 `inspoaibox`，对应仓库 `https://github.com/inspoaibox/hujiaozhongxin`。
 
 **3. 一键启动**
 

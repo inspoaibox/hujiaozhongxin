@@ -119,7 +119,7 @@ services:
 
   auth-service:
     <<: *app-image
-    image: ${IMAGE_REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE:-qianniuyun}/qianniu/auth-service:${IMAGE_TAG:-latest}
+    image: ${IMAGE_REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE:-inspoaibox}/qianniu/auth-service:${IMAGE_TAG:-latest}
     container_name: qianniu-auth-service
     depends_on:
       - nacos
@@ -132,7 +132,7 @@ services:
 
   customer-service:
     <<: *app-image
-    image: ${IMAGE_REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE:-qianniuyun}/qianniu/customer-service:${IMAGE_TAG:-latest}
+    image: ${IMAGE_REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE:-inspoaibox}/qianniu/customer-service:${IMAGE_TAG:-latest}
     container_name: qianniu-customer-service
     depends_on:
       - nacos
@@ -143,7 +143,7 @@ services:
 
   agent-service:
     <<: *app-image
-    image: ${IMAGE_REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE:-qianniuyun}/qianniu/agent-service:${IMAGE_TAG:-latest}
+    image: ${IMAGE_REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE:-inspoaibox}/qianniu/agent-service:${IMAGE_TAG:-latest}
     container_name: qianniu-agent-service
     depends_on:
       - nacos
@@ -156,7 +156,7 @@ services:
 
   call-service:
     <<: *app-image
-    image: ${IMAGE_REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE:-qianniuyun}/qianniu/call-service:${IMAGE_TAG:-latest}
+    image: ${IMAGE_REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE:-inspoaibox}/qianniu/call-service:${IMAGE_TAG:-latest}
     container_name: qianniu-call-service
     depends_on:
       - nacos
@@ -170,7 +170,7 @@ services:
 
   ivr-service:
     <<: *app-image
-    image: ${IMAGE_REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE:-qianniuyun}/qianniu/ivr-service:${IMAGE_TAG:-latest}
+    image: ${IMAGE_REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE:-inspoaibox}/qianniu/ivr-service:${IMAGE_TAG:-latest}
     container_name: qianniu-ivr-service
     depends_on:
       - nacos
@@ -182,7 +182,7 @@ services:
 
   recording-service:
     <<: *app-image
-    image: ${IMAGE_REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE:-qianniuyun}/qianniu/recording-service:${IMAGE_TAG:-latest}
+    image: ${IMAGE_REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE:-inspoaibox}/qianniu/recording-service:${IMAGE_TAG:-latest}
     container_name: qianniu-recording-service
     depends_on:
       - nacos
@@ -195,7 +195,7 @@ services:
 
   ticket-service:
     <<: *app-image
-    image: ${IMAGE_REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE:-qianniuyun}/qianniu/ticket-service:${IMAGE_TAG:-latest}
+    image: ${IMAGE_REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE:-inspoaibox}/qianniu/ticket-service:${IMAGE_TAG:-latest}
     container_name: qianniu-ticket-service
     depends_on:
       - nacos
@@ -207,7 +207,7 @@ services:
 
   quality-service:
     <<: *app-image
-    image: ${IMAGE_REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE:-qianniuyun}/qianniu/quality-service:${IMAGE_TAG:-latest}
+    image: ${IMAGE_REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE:-inspoaibox}/qianniu/quality-service:${IMAGE_TAG:-latest}
     container_name: qianniu-quality-service
     depends_on:
       - nacos
@@ -219,7 +219,7 @@ services:
 
   report-service:
     <<: *app-image
-    image: ${IMAGE_REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE:-qianniuyun}/qianniu/report-service:${IMAGE_TAG:-latest}
+    image: ${IMAGE_REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE:-inspoaibox}/qianniu/report-service:${IMAGE_TAG:-latest}
     container_name: qianniu-report-service
     depends_on:
       - nacos
@@ -230,7 +230,7 @@ services:
 
   notification-service:
     <<: *app-image
-    image: ${IMAGE_REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE:-qianniuyun}/qianniu/notification-service:${IMAGE_TAG:-latest}
+    image: ${IMAGE_REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE:-inspoaibox}/qianniu/notification-service:${IMAGE_TAG:-latest}
     container_name: qianniu-notification-service
     depends_on:
       - nacos
@@ -242,7 +242,7 @@ services:
 
   call-distribution-engine:
     <<: *app-image
-    image: ${IMAGE_REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE:-qianniuyun}/qianniu/call-distribution-engine:${IMAGE_TAG:-latest}
+    image: ${IMAGE_REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE:-inspoaibox}/qianniu/call-distribution-engine:${IMAGE_TAG:-latest}
     container_name: qianniu-call-distribution-engine
     depends_on:
       - nacos
@@ -253,7 +253,7 @@ services:
 
   ws-gateway:
     <<: *app-image
-    image: ${IMAGE_REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE:-qianniuyun}/qianniu/ws-gateway:${IMAGE_TAG:-latest}
+    image: ${IMAGE_REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE:-inspoaibox}/qianniu/ws-gateway:${IMAGE_TAG:-latest}
     container_name: qianniu-ws-gateway
     depends_on:
       - nacos
@@ -265,7 +265,7 @@ services:
 
   api-gateway:
     <<: *app-image
-    image: ${IMAGE_REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE:-qianniuyun}/qianniu/api-gateway:${IMAGE_TAG:-latest}
+    image: ${IMAGE_REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE:-inspoaibox}/qianniu/api-gateway:${IMAGE_TAG:-latest}
     container_name: qianniu-api-gateway
     depends_on:
       - nacos
@@ -278,7 +278,7 @@ services:
 
   agent-workspace:
     <<: *app-image
-    image: ${IMAGE_REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE:-qianniuyun}/qianniu/agent-workspace:${IMAGE_TAG:-latest}
+    image: ${IMAGE_REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE:-inspoaibox}/qianniu/agent-workspace:${IMAGE_TAG:-latest}
     container_name: qianniu-agent-workspace
     depends_on:
       - api-gateway
@@ -288,7 +288,7 @@ services:
 
   admin-portal:
     <<: *app-image
-    image: ${IMAGE_REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE:-qianniuyun}/qianniu/admin-portal:${IMAGE_TAG:-latest}
+    image: ${IMAGE_REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE:-inspoaibox}/qianniu/admin-portal:${IMAGE_TAG:-latest}
     container_name: qianniu-admin-portal
     depends_on:
       - api-gateway
