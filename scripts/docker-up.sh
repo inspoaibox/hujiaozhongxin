@@ -27,14 +27,59 @@ core_services=(
   agent-workspace
   admin-portal
 )
+full_only_services=(
+  zookeeper
+  kafka
+  minio
+  customer-service
+  agent-service
+  call-service
+  ivr-service
+  recording-service
+  ticket-service
+  quality-service
+  report-service
+  notification-service
+  call-distribution-engine
+  ws-gateway
+)
+
+wait_healthy() {
+  local container="$1"
+  local label="$2"
+  local timeout_seconds="${3:-180}"
+  local elapsed=0
+
+  echo "等待 ${label} 就绪..."
+  while [ "$elapsed" -lt "$timeout_seconds" ]; do
+    status="$(docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' "$container" 2>/dev/null || true)"
+    if [ "$status" = "healthy" ] || [ "$status" = "running" ]; then
+      echo "${label} 已就绪。"
+      return 0
+    fi
+    sleep 5
+    elapsed=$((elapsed + 5))
+  done
+
+  echo "${label} 等待超时，请执行：docker logs --tail=80 ${container}"
+  return 1
+}
 
 case "$mode" in
   lite|core)
     echo "使用轻量模式启动：只启动页面和登录必需服务。"
     echo "如需启动录音、质检、通知、WebSocket、Kafka 等完整服务，请执行：bash scripts/docker-up.sh full"
+    echo "正在停止完整模式才需要的重型服务，避免旧容器反复重启占用资源..."
+    docker compose stop "${full_only_services[@]}" || true
+    docker compose rm -f -s "${full_only_services[@]}" || true
     docker compose pull "${core_services[@]}"
-    docker compose up -d nacos redis auth-service api-gateway
-    docker compose up -d --no-deps agent-workspace admin-portal
+    docker compose up -d --force-recreate nacos redis
+    wait_healthy qianniu-nacos Nacos 240
+    wait_healthy qianniu-redis Redis 120
+    docker compose up -d --force-recreate auth-service
+    sleep 10
+    docker compose up -d --force-recreate api-gateway
+    docker compose up -d --force-recreate --no-deps agent-workspace admin-portal
     docker compose ps "${core_services[@]}"
     ;;
   full)

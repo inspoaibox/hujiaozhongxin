@@ -23,23 +23,78 @@ $coreServices = @(
     "agent-workspace",
     "admin-portal"
 )
+$fullOnlyServices = @(
+    "zookeeper",
+    "kafka",
+    "minio",
+    "customer-service",
+    "agent-service",
+    "call-service",
+    "ivr-service",
+    "recording-service",
+    "ticket-service",
+    "quality-service",
+    "report-service",
+    "notification-service",
+    "call-distribution-engine",
+    "ws-gateway"
+)
+
+function Wait-ContainerReady {
+    param(
+        [string]$Container,
+        [string]$Label,
+        [int]$TimeoutSeconds = 180
+    )
+
+    Write-Host "等待 $Label 就绪..."
+    $elapsed = 0
+    while ($elapsed -lt $TimeoutSeconds) {
+        $status = docker inspect -f "{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}" $Container 2>$null
+        if ($status -eq "healthy" -or $status -eq "running") {
+            Write-Host "$Label 已就绪。"
+            return
+        }
+
+        Start-Sleep -Seconds 5
+        $elapsed += 5
+    }
+
+    throw "$Label 等待超时，请执行：docker logs --tail=80 $Container"
+}
 
 switch ($Mode) {
     "lite" {
         Write-Host "使用轻量模式启动：只启动页面和登录必需服务。"
         Write-Host "如需启动录音、质检、通知、WebSocket、Kafka 等完整服务，请执行：.\scripts\docker-up.ps1 full"
+        Write-Host "正在停止完整模式才需要的重型服务，避免旧容器反复重启占用资源..."
+        docker compose stop @fullOnlyServices
+        docker compose rm -f -s @fullOnlyServices
         docker compose pull @coreServices
-        docker compose up -d nacos redis auth-service api-gateway
-        docker compose up -d --no-deps agent-workspace admin-portal
+        docker compose up -d --force-recreate nacos redis
+        Wait-ContainerReady "qianniu-nacos" "Nacos" 240
+        Wait-ContainerReady "qianniu-redis" "Redis" 120
+        docker compose up -d --force-recreate auth-service
+        Start-Sleep -Seconds 10
+        docker compose up -d --force-recreate api-gateway
+        docker compose up -d --force-recreate --no-deps agent-workspace admin-portal
         docker compose ps @coreServices
         break
     }
     "core" {
         Write-Host "使用轻量模式启动：只启动页面和登录必需服务。"
         Write-Host "如需启动录音、质检、通知、WebSocket、Kafka 等完整服务，请执行：.\scripts\docker-up.ps1 full"
+        Write-Host "正在停止完整模式才需要的重型服务，避免旧容器反复重启占用资源..."
+        docker compose stop @fullOnlyServices
+        docker compose rm -f -s @fullOnlyServices
         docker compose pull @coreServices
-        docker compose up -d nacos redis auth-service api-gateway
-        docker compose up -d --no-deps agent-workspace admin-portal
+        docker compose up -d --force-recreate nacos redis
+        Wait-ContainerReady "qianniu-nacos" "Nacos" 240
+        Wait-ContainerReady "qianniu-redis" "Redis" 120
+        docker compose up -d --force-recreate auth-service
+        Start-Sleep -Seconds 10
+        docker compose up -d --force-recreate api-gateway
+        docker compose up -d --force-recreate --no-deps agent-workspace admin-portal
         docker compose ps @coreServices
         break
     }
