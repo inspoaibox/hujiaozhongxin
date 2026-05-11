@@ -11,6 +11,8 @@ WORKDIR /app
 
 COPY target/ws-gateway-*.jar app.jar
 
+RUN mkdir -p /app/data && chown -R qianniu:qianniu /app/data
+
 USER qianniu
 
 EXPOSE 8889

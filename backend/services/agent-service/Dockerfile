@@ -11,6 +11,8 @@ WORKDIR /app
 
 COPY target/agent-service-*.jar app.jar
 
+RUN mkdir -p /app/data && chown -R qianniu:qianniu /app/data
+
 USER qianniu
 
 EXPOSE 8081

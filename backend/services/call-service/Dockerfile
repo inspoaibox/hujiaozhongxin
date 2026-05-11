@@ -17,8 +17,8 @@ WORKDIR /app
 # 复制 JAR 包（GitHub Actions 构建后的产物）
 COPY target/call-service-*.jar app.jar
 
-# 录音临时文件目录
-RUN mkdir -p /recordings && chown qianniu:qianniu /recordings
+# H2 演示库和录音临时文件目录
+RUN mkdir -p /app/data /recordings && chown -R qianniu:qianniu /app/data /recordings
 
 USER qianniu
 

@@ -170,10 +170,10 @@
 
 - Docker 24.0+
 - Docker Compose 2.20+
-- Java 17+（后端开发）
-- Node.js 18+（前端开发）
+- Java 17+（仅本地开发需要）
+- Node.js 18+（仅本地开发需要）
 
-### 本地开发环境启动
+### 方式一：一键 Docker 部署（推荐）
 
 **1. 克隆项目**
 ```bash
@@ -181,32 +181,64 @@ git clone https://github.com/qianniuyun/callcenter.git
 cd callcenter
 ```
 
-**2. 启动基础设施**
+**2. 复制配置文件**
+```bash
+cp .env.example .env
+```
+
+如果镜像在你自己的 GitHub 账号或组织下，打开 `.env`，把 `IMAGE_NAMESPACE` 改成你的 GitHub 用户名或组织名。
+
+**3. 一键启动**
+
+Linux / macOS：
+```bash
+bash scripts/docker-up.sh
+```
+
+Windows PowerShell：
+```powershell
+.\scripts\docker-up.ps1
+```
+
+也可以直接使用 Docker Compose：
+```bash
+docker compose up -d
+```
+
+**4. 查看状态**
+```bash
+docker compose ps
+```
+
+**5. 访问系统**
+
+| 服务 | 地址 | 默认账号 |
+|------|------|---------|
+| 座席工作台 | http://localhost:5173 | admin / Admin@2025 |
+| 管理后台 | http://localhost:5174 | admin / Admin@2025 |
+| MinIO 控制台 | http://localhost:9001 | qianniu / qianniu@2025 |
+| Nacos 控制台 | http://localhost:8848/nacos | 默认未开启鉴权 |
+
+更详细的一键部署说明见：`docs/deployment/docker-one-click.md`。
+
+### 方式二：本地开发启动
+
+开发者需要单独启动中间件、后端和前端。
+
+**1. 启动基础设施**
 ```bash
 cd infrastructure/docker-compose
-docker-compose up -d
+docker compose up -d
 ```
 
-等待所有服务健康检查通过（约 2-3 分钟）：
-```bash
-docker-compose ps
-```
-
-**3. 初始化数据库**
-```bash
-docker exec -i qianniu-postgres psql -U qianniu -d qianniu_callcenter \
-  < infrastructure/sql/init.sql
-```
-
-**4. 启动后端服务**
+**2. 启动后端服务**
 ```bash
 cd backend
-mvn clean install -DskipTests
-# 按顺序启动：auth → customer → agent → call → 其他服务
+mvn clean package -DskipTests
 mvn spring-boot:run -pl services/auth-service
 ```
 
-**5. 启动前端**
+**3. 启动前端**
 ```bash
 # 座席工作台
 cd frontend/agent-workspace
@@ -218,17 +250,6 @@ cd frontend/admin-portal
 npm install
 npm run dev
 ```
-
-**6. 访问系统**
-
-| 服务 | 地址 | 默认账号 |
-|------|------|---------|
-| 座席工作台 | http://localhost:5173 | agent / Agent@2025 |
-| 管理后台 | http://localhost:5174 | admin / Admin@2025 |
-| Grafana 监控 | http://localhost:3000 | admin / qianniu@2025 |
-| MinIO 控制台 | http://localhost:9001 | qianniu / qianniu@2025 |
-| Kibana 日志 | http://localhost:5601 | - |
-| Jaeger 追踪 | http://localhost:16686 | - |
 
 ---
 
@@ -307,6 +328,7 @@ callcenter/
 | 产品解决方案 | `docs/product-solution.md` | 产品定位、业务方案、架构、实施路线、验收清单 |
 | 完整小白使用手册 | `docs/user-guide/beginner-guide.md` | 每一页、每个功能、每个按钮和操作步骤 |
 | API 接口文档 | `docs/api/api-reference.md` | 所有 REST API 接口说明 |
+| 一键 Docker 部署 | `docs/deployment/docker-one-click.md` | 服务器直接拉 GitHub 镜像并一键启动 |
 | 部署指南 | `docs/deployment/deployment-guide.md` | 本地开发和生产环境部署步骤 |
 | 座席操作手册 | `docs/user-guide/agent-guide.md` | 座席工作台使用说明 |
 | 管理员操作手册 | `docs/user-guide/admin-guide.md` | 管理后台使用说明 |

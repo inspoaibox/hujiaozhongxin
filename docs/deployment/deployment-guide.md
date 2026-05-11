@@ -5,6 +5,21 @@
 
 ---
 
+## 推荐阅读
+
+如果只是想把系统快速跑起来，不想安装 Java、Node、Maven，也不想手动启动每个服务，优先使用一键 Docker 部署：
+
+```bash
+cp .env.example .env
+docker compose up -d
+```
+
+完整步骤见：`docs/deployment/docker-one-click.md`。
+
+下面内容更适合开发、联调、Kubernetes 生产部署和电话网关配置。
+
+---
+
 ## 目录
 
 1. [环境要求](#1-环境要求)

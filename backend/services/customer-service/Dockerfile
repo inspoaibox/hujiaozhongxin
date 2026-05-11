@@ -11,6 +11,8 @@ WORKDIR /app
 
 COPY target/customer-service-*.jar app.jar
 
+RUN mkdir -p /app/data && chown -R qianniu:qianniu /app/data
+
 USER qianniu
 
 EXPOSE 8082

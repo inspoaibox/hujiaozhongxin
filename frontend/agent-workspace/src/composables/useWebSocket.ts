@@ -18,8 +18,9 @@ export function useWebSocket() {
   function connect(token: string) {
     disconnect()
 
-    const baseUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:8889/ws/agent'
-    const url = new URL(baseUrl, window.location.href.replace(/^http/, 'ws'))
+    const defaultUrl = `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/ws/agent`
+    const baseUrl = import.meta.env.VITE_WS_URL || defaultUrl
+    const url = new URL(baseUrl, defaultUrl)
     if (token) url.searchParams.set('token', token)
     url.searchParams.set('agentId', localStorage.getItem('agentId') || '1000')
     url.searchParams.set('role', localStorage.getItem('role') || 'AGENT')
