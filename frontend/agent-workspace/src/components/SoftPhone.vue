@@ -24,7 +24,7 @@
       </div>
       <template #footer>
         <el-button type="success" @click="answerCall" :icon="Phone">接听</el-button>
-        <el-button type="danger" @click="rejectCall" :icon="PhoneOff">拒接</el-button>
+        <el-button type="danger" @click="rejectCall" :icon="CircleCloseFilled">拒接</el-button>
       </template>
     </el-dialog>
 
@@ -66,7 +66,7 @@
         </el-tooltip>
 
         <el-tooltip content="挂断">
-          <el-button type="danger" circle :icon="PhoneOff" @click="hangupCall" />
+          <el-button type="danger" circle :icon="CircleCloseFilled" @click="hangupCall" />
         </el-tooltip>
       </div>
     </div>
@@ -127,7 +127,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { Phone, PhoneOff, Microphone, Mute, Share, Connection, VideoPlay, VideoPause, User } from '@element-plus/icons-vue'
+import { Phone, CircleCloseFilled, Microphone, Mute, Share, Connection, VideoPlay, VideoPause, User } from '@element-plus/icons-vue'
 import { useCallStore } from '@/stores/callStore'
 import { useAgentStore } from '@/stores/agentStore'
 import { ElMessage } from 'element-plus'
