@@ -40,6 +40,42 @@ jobs:
         # 当前项目骨架尚未完整，先确保能编译通过
         run: mvn clean package -DskipTests -B --no-transfer-progress
 
+      - name: 校验后端 JAR 可执行
+        working-directory: backend
+        shell: bash
+        run: |
+          set -euo pipefail
+          services=(
+            services/auth-service
+            services/customer-service
+            services/agent-service
+            services/call-service
+            services/ivr-service
+            services/recording-service
+            services/ticket-service
+            services/quality-service
+            services/report-service
+            services/notification-service
+            gateway/api-gateway
+            gateway/ws-gateway
+            engines/call-distribution-engine
+          )
+
+          for service in "${services[@]}"; do
+            jar_file=$(find "$service/target" -maxdepth 1 -name "*.jar" ! -name "*.original" | head -n 1)
+            if [ -z "$jar_file" ]; then
+              echo "::error::$service 没有生成 JAR"
+              exit 1
+            fi
+
+            manifest=$(unzip -p "$jar_file" META-INF/MANIFEST.MF || true)
+            if ! grep -q "Main-Class: org.springframework.boot.loader.launch.JarLauncher" <<< "$manifest"; then
+              echo "::error::$jar_file 不是 Spring Boot 可执行 JAR，容器会报 no main manifest attribute"
+              echo "$manifest"
+              exit 1
+            fi
+          done
+
       - name: 上传测试报告
         if: always()
         uses: actions/upload-artifact@v4

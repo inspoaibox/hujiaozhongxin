@@ -340,6 +340,13 @@ docker compose pull agent-workspace admin-portal
 docker compose up -d agent-workspace admin-portal
 ```
 
+如果 `api-gateway` 或 `auth-service` 日志里出现 `no main manifest attribute, in app.jar`，说明 GitHub Actions 生成的后端 JAR 不是可执行 Spring Boot JAR。需要先把最新代码推送到 GitHub，等待 Actions 重新构建并推送镜像，然后服务器重新拉镜像：
+
+```bash
+docker compose pull api-gateway auth-service
+docker compose up -d --force-recreate api-gateway auth-service
+```
+
 如果 `/health` 都打不开，说明问题在前端容器或端口映射，不是账号密码或页面功能：
 
 ```bash
